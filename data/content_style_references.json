@@ -1,0 +1,43 @@
+{
+  "instructions": "Add successful content creator examples here. The research agent will analyze their patterns and structure.",
+  "creators": [
+    {
+      "name": "Example Creator",
+      "platform": "LinkedIn/YouTube/Twitter",
+      "profile_url": "https://...",
+      "content_style": {
+        "hook_pattern": "How they start their content (e.g., 'Question', 'Bold statement', 'Story')",
+        "structure": "How they organize content (e.g., 'Problem > Solution > CTA', 'Story > Lesson > Application')",
+        "length": "Typical content length",
+        "tone": "professional/casual/educational/provocative",
+        "engagement_tactics": ["What they do to drive engagement"],
+        "signature_elements": ["Unique elements they always include"]
+      },
+      "example_posts": [
+        {
+          "title_or_hook": "Example hook or title",
+          "key_elements": "What makes this post effective",
+          "structure_notes": "How they organized this piece"
+        }
+      ]
+    }
+  ],
+  "pattern_analysis": {
+    "common_hooks": [
+      "Most successful creators use questions to start",
+      "Bold contrarian statements get attention",
+      "Personal stories create connection"
+    ],
+    "content_structures": [
+      "Problem > Agitation > Solution",
+      "Hook > Story > Lesson > Application",
+      "Data point > Surprise > Explanation > Action"
+    ],
+    "engagement_tactics": [
+      "Ask questions in first comment",
+      "Use line breaks for readability",
+      "Include specific numbers/metrics",
+      "End with clear CTA"
+    ]
+  }
+}

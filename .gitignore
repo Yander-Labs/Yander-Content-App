@@ -1,0 +1,62 @@
+# Environment variables
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/*.log
+
+# Output files
+output/*.json
+output/scripts/*.json
+output/mindmaps/*.svg
+output/videos/*
+
+# Keep directory structure
+!output/.gitkeep
+!output/scripts/.gitkeep
+!output/mindmaps/.gitkeep
+!output/videos/.gitkeep
+
+# Data files (may contain sensitive info)
+data/*
+!data/.gitkeep
+!data/example_tool_info.txt
+!data/content_style_references.json
+
+# Temporary files
+*.tmp
+*.bak
+.cache/

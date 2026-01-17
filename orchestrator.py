@@ -1,0 +1,326 @@
+"""
+Content Creation Orchestrator
+Coordinates all agents to execute the full content creation workflow.
+"""
+
+import os
+import sys
+import json
+from typing import Dict, Any, List, Optional
+from datetime import datetime
+from colorama import Fore, Style, init
+
+# Add agents to path
+sys.path.insert(0, os.path.dirname(__file__))
+
+from agents.research_agent import ResearchAgent
+from agents.scriptwriting_agent import ScriptwritingAgent
+from agents.mindmap_agent import MindmapAgent
+from agents.notion_agent import NotionAgent
+from agents.editor_notification_agent import EditorNotificationAgent
+
+# Initialize colorama
+init(autoreset=True)
+
+
+class ContentCreationOrchestrator:
+    """Main orchestrator that coordinates all content creation agents."""
+
+    def __init__(self):
+        self.research_agent = ResearchAgent()
+        self.scriptwriting_agent = ScriptwritingAgent()
+        self.mindmap_agent = MindmapAgent()
+        self.notion_agent = NotionAgent()
+        self.editor_agent = EditorNotificationAgent()
+
+        print(f"{Fore.GREEN}✓ Content Creation Orchestrator initialized{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}All agents loaded and ready{Style.RESET_ALL}\n")
+
+    def create_video_content(self,
+                            tool_info: Optional[str] = None,
+                            user_data: Optional[str] = None,
+                            topics: Optional[List[str]] = None,
+                            video_index: int = 0,
+                            tone: str = "professional") -> Dict[str, Any]:
+        """
+        Create complete video content (idea, script, mindmap, Notion entry).
+
+        Args:
+            tool_info: Information about the marketing tool
+            user_data: Additional user-provided data
+            topics: Topics to focus on
+            video_index: Index of video idea to use
+            tone: Tone for the script
+
+        Returns:
+            Dictionary with all created content
+        """
+        print(f"\n{Fore.YELLOW}{'='*60}")
+        print(f"{Fore.YELLOW}CREATING VIDEO CONTENT")
+        print(f"{Fore.YELLOW}{'='*60}{Style.RESET_ALL}\n")
+
+        result = {}
+
+        # Step 1: Research content ideas
+        print(f"{Fore.CYAN}[1/5] Researching content ideas...{Style.RESET_ALL}")
+        research_results = self.research_agent.execute(
+            tool_info=tool_info,
+            user_data=user_data,
+            topics=topics,
+            num_video_ideas=3,
+            num_post_ideas=0
+        )
+
+        if 'error' in research_results:
+            print(f"{Fore.RED}✗ Research failed: {research_results['error']}{Style.RESET_ALL}")
+            return {"error": "Research failed", "details": research_results}
+
+        video_ideas = research_results.get('video_ideas', [])
+        if not video_ideas:
+            print(f"{Fore.RED}✗ No video ideas generated{Style.RESET_ALL}")
+            return {"error": "No video ideas generated"}
+
+        selected_idea = video_ideas[min(video_index, len(video_ideas) - 1)]
+        print(f"{Fore.GREEN}✓ Selected idea: {selected_idea['title']}{Style.RESET_ALL}\n")
+        result['idea'] = selected_idea
+
+        # Step 2: Write script
+        print(f"{Fore.CYAN}[2/5] Writing video script...{Style.RESET_ALL}")
+        script_result = self.scriptwriting_agent.execute(
+            content_type="video",
+            idea=selected_idea,
+            tone=tone
+        )
+
+        if 'error' in script_result:
+            print(f"{Fore.RED}✗ Scriptwriting failed: {script_result['error']}{Style.RESET_ALL}")
+            return {"error": "Scriptwriting failed", "details": script_result}
+
+        print(f"{Fore.GREEN}✓ Script complete ({script_result.get('estimated_length_minutes', 0)} minutes){Style.RESET_ALL}\n")
+        result['script'] = script_result
+
+        # Step 3: Generate mindmap
+        print(f"{Fore.CYAN}[3/5] Generating mindmap...{Style.RESET_ALL}")
+        mindmap_result = self.mindmap_agent.execute(
+            content=script_result,
+            content_type="video"
+        )
+
+        if 'error' in mindmap_result:
+            print(f"{Fore.RED}✗ Mindmap generation failed: {mindmap_result['error']}{Style.RESET_ALL}")
+            result['mindmap'] = None
+        else:
+            print(f"{Fore.GREEN}✓ Mindmap saved: {mindmap_result['svg_file']}{Style.RESET_ALL}\n")
+            result['mindmap'] = mindmap_result
+
+        # Step 4: Create Notion entry
+        print(f"{Fore.CYAN}[4/5] Creating Notion database entry...{Style.RESET_ALL}")
+        notion_result = self.notion_agent.execute(
+            content_type="video",
+            idea=selected_idea,
+            content=script_result,
+            mindmap_path=mindmap_result.get('svg_file') if mindmap_result else None
+        )
+
+        if not notion_result.get('success'):
+            print(f"{Fore.RED}✗ Notion entry creation failed{Style.RESET_ALL}")
+            result['notion'] = None
+        else:
+            print(f"{Fore.GREEN}✓ Notion page created: {notion_result['page_url']}{Style.RESET_ALL}\n")
+            result['notion'] = notion_result
+
+        # Step 5: Summary
+        print(f"{Fore.CYAN}[5/5] Video content package complete!{Style.RESET_ALL}\n")
+
+        result['status'] = 'complete'
+        result['created_at'] = datetime.now().isoformat()
+
+        return result
+
+    def create_post_content(self,
+                           tool_info: Optional[str] = None,
+                           user_data: Optional[str] = None,
+                           topics: Optional[List[str]] = None,
+                           post_index: int = 0,
+                           tone: str = "professional") -> Dict[str, Any]:
+        """
+        Create complete post content (idea, copy, Notion entry).
+
+        Args:
+            tool_info: Information about the marketing tool
+            user_data: Additional user-provided data
+            topics: Topics to focus on
+            post_index: Index of post idea to use
+            tone: Tone for the copy
+
+        Returns:
+            Dictionary with all created content
+        """
+        print(f"\n{Fore.YELLOW}{'='*60}")
+        print(f"{Fore.YELLOW}CREATING POST CONTENT")
+        print(f"{Fore.YELLOW}{'='*60}{Style.RESET_ALL}\n")
+
+        result = {}
+
+        # Step 1: Research content ideas
+        print(f"{Fore.CYAN}[1/3] Researching content ideas...{Style.RESET_ALL}")
+        research_results = self.research_agent.execute(
+            tool_info=tool_info,
+            user_data=user_data,
+            topics=topics,
+            num_video_ideas=0,
+            num_post_ideas=5
+        )
+
+        if 'error' in research_results:
+            print(f"{Fore.RED}✗ Research failed: {research_results['error']}{Style.RESET_ALL}")
+            return {"error": "Research failed", "details": research_results}
+
+        post_ideas = research_results.get('post_ideas', [])
+        if not post_ideas:
+            print(f"{Fore.RED}✗ No post ideas generated{Style.RESET_ALL}")
+            return {"error": "No post ideas generated"}
+
+        selected_idea = post_ideas[min(post_index, len(post_ideas) - 1)]
+        print(f"{Fore.GREEN}✓ Selected idea: {selected_idea['title']}{Style.RESET_ALL}\n")
+        result['idea'] = selected_idea
+
+        # Step 2: Write post copy
+        print(f"{Fore.CYAN}[2/3] Writing post copy...{Style.RESET_ALL}")
+        post_result = self.scriptwriting_agent.execute(
+            content_type="post",
+            idea=selected_idea,
+            tone=tone
+        )
+
+        if 'error' in post_result:
+            print(f"{Fore.RED}✗ Post writing failed: {post_result['error']}{Style.RESET_ALL}")
+            return {"error": "Post writing failed", "details": post_result}
+
+        print(f"{Fore.GREEN}✓ Post complete ({post_result.get('word_count', 0)} words){Style.RESET_ALL}\n")
+        result['post'] = post_result
+
+        # Step 3: Create Notion entry
+        print(f"{Fore.CYAN}[3/3] Creating Notion database entry...{Style.RESET_ALL}")
+        notion_result = self.notion_agent.execute(
+            content_type="post",
+            idea=selected_idea,
+            content=post_result
+        )
+
+        if not notion_result.get('success'):
+            print(f"{Fore.RED}✗ Notion entry creation failed{Style.RESET_ALL}")
+            result['notion'] = None
+        else:
+            print(f"{Fore.GREEN}✓ Notion page created: {notion_result['page_url']}{Style.RESET_ALL}\n")
+            result['notion'] = notion_result
+
+        result['status'] = 'complete'
+        result['created_at'] = datetime.now().isoformat()
+
+        return result
+
+    def notify_editor(self,
+                     notion_page_id: str,
+                     video_files: List[str],
+                     notes: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Notify video editor that files are ready.
+
+        Args:
+            notion_page_id: Notion page ID for the video
+            video_files: List of video file paths
+            notes: Additional notes for editor
+
+        Returns:
+            Dictionary with notification status
+        """
+        print(f"\n{Fore.YELLOW}{'='*60}")
+        print(f"{Fore.YELLOW}NOTIFYING VIDEO EDITOR")
+        print(f"{Fore.YELLOW}{'='*60}{Style.RESET_ALL}\n")
+
+        print(f"{Fore.CYAN}Assigning {len(video_files)} file(s) to editor...{Style.RESET_ALL}")
+
+        result = self.editor_agent.execute(
+            page_id=notion_page_id,
+            video_files=video_files,
+            notes=notes
+        )
+
+        if result.get('assigned_to_editor'):
+            print(f"{Fore.GREEN}✓ Editor notified successfully{Style.RESET_ALL}\n")
+        else:
+            print(f"{Fore.RED}✗ Failed to notify editor{Style.RESET_ALL}\n")
+
+        return result
+
+    def batch_create_videos(self,
+                           count: int = 3,
+                           **kwargs) -> List[Dict[str, Any]]:
+        """
+        Create multiple video content packages.
+
+        Args:
+            count: Number of videos to create
+            **kwargs: Arguments to pass to create_video_content
+
+        Returns:
+            List of results
+        """
+        print(f"\n{Fore.MAGENTA}{'='*60}")
+        print(f"{Fore.MAGENTA}BATCH CREATING {count} VIDEOS")
+        print(f"{Fore.MAGENTA}{'='*60}{Style.RESET_ALL}\n")
+
+        results = []
+        for i in range(count):
+            print(f"{Fore.MAGENTA}Video {i+1}/{count}{Style.RESET_ALL}")
+            result = self.create_video_content(video_index=i, **kwargs)
+            results.append(result)
+
+        print(f"\n{Fore.GREEN}✓ Batch creation complete: {count} videos{Style.RESET_ALL}\n")
+        return results
+
+    def batch_create_posts(self,
+                          count: int = 5,
+                          **kwargs) -> List[Dict[str, Any]]:
+        """
+        Create multiple post content packages.
+
+        Args:
+            count: Number of posts to create
+            **kwargs: Arguments to pass to create_post_content
+
+        Returns:
+            List of results
+        """
+        print(f"\n{Fore.MAGENTA}{'='*60}")
+        print(f"{Fore.MAGENTA}BATCH CREATING {count} POSTS")
+        print(f"{Fore.MAGENTA}{'='*60}{Style.RESET_ALL}\n")
+
+        results = []
+        for i in range(count):
+            print(f"{Fore.MAGENTA}Post {i+1}/{count}{Style.RESET_ALL}")
+            result = self.create_post_content(post_index=i, **kwargs)
+            results.append(result)
+
+        print(f"\n{Fore.GREEN}✓ Batch creation complete: {count} posts{Style.RESET_ALL}\n")
+        return results
+
+
+def main():
+    """Example usage of the orchestrator."""
+    orchestrator = ContentCreationOrchestrator()
+
+    # Example: Create a video
+    result = orchestrator.create_video_content(
+        tool_info="Marketing automation platform for agencies",
+        topics=["client retention", "agency automation"],
+        tone="professional"
+    )
+
+    print(f"\n{Fore.CYAN}Result:{Style.RESET_ALL}")
+    print(json.dumps({k: v for k, v in result.items() if k not in ['script', 'mindmap']}, indent=2))
+
+
+if __name__ == "__main__":
+    main()

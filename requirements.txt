@@ -1,0 +1,33 @@
+# Core dependencies
+anthropic>=0.18.0
+python-dotenv>=1.0.0
+
+# Web scraping and research
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+feedparser>=6.0.10
+
+# Notion integration
+notion-client>=2.2.1
+
+# Social media integrations
+google-auth>=2.27.0
+google-auth-oauthlib>=1.2.0
+google-auth-httplib2>=0.2.0
+google-api-python-client>=2.116.0
+tweepy>=4.14.0
+instagrapi>=2.0.0
+linkedin-api>=2.2.0
+
+# Image and mindmap generation
+pillow>=10.2.0
+svgwrite>=1.4.3
+pydot>=2.0.0
+
+# Data processing
+pandas>=2.2.0
+pyyaml>=6.0.1
+
+# Utilities
+colorama>=0.4.6
+tqdm>=4.66.1

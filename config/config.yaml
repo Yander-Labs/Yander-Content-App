@@ -1,0 +1,58 @@
+# Content Creation Agents Configuration
+
+# Agent Settings
+agents:
+  research:
+    model: "claude-sonnet-4-5-20250929"
+    max_tokens: 4096
+    temperature: 1.0
+    default_video_ideas: 3
+    default_post_ideas: 5
+
+  scriptwriting:
+    model: "claude-sonnet-4-5-20250929"
+    max_tokens: 8192
+    temperature: 0.8
+
+  mindmap:
+    model: "claude-sonnet-4-5-20250929"
+    max_tokens: 2048
+    temperature: 0.7
+    default_width: 1920
+    default_height: 1080
+    style: "modern"
+
+# Content Settings
+content:
+  video:
+    default_length_minutes: 15
+    min_length_minutes: 10
+    max_length_minutes: 30
+
+  post:
+    default_length_words: 200
+    min_length_words: 150
+    max_length_words: 500
+
+  default_tone: "professional"
+  target_audience: "marketing_agency_owners"
+
+# Notion Settings
+notion:
+  retry_attempts: 3
+  retry_delay_seconds: 2
+
+# Output Settings
+output:
+  base_dir: "output"
+  subdirs:
+    scripts: "output/scripts"
+    mindmaps: "output/mindmaps"
+    videos: "output/videos"
+    results: "output"
+
+# Logging Settings
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  dir: "logs"

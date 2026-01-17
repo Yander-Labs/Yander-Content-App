@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allow": [
+      "Bash(python *)",
+      "Bash(python3 *)",
+      "Bash(pip *)",
+      "Bash(pip3 *)",
+      "Bash(pytest *)",
+      "Bash(black *)",
+      "Bash(flake8 *)",
+      "Bash(mypy *)",
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(tree *)",
+      "Bash(curl *)",
+      "Bash(wget *)",
+      "Bash(mkdir *)",
+      "Bash(touch *)",
+      "Bash(echo *)",
+      "Bash(source *)",
+      "Bash(cd *)",
+      "Bash(pwd)",
+      "Edit(/Users/jordanhayes/content-creation-agents/**)",
+      "Read(/Users/jordanhayes/content-creation-agents/**)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)",
+      "Bash(sudo *)",
+      "Bash(chmod +x *)",
+      "Bash(git push --force *)",
+      "Read(/Users/jordanhayes/content-creation-agents/.env)",
+      "Read(/Users/jordanhayes/content-creation-agents/.env.*)",
+      "Edit(/Users/jordanhayes/content-creation-agents/.env)",
+      "Edit(/Users/jordanhayes/content-creation-agents/.env.*)"
+    ]
+  }
+}

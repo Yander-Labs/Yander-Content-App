@@ -1,0 +1,48 @@
+Example Tool Information File
+
+Replace this with information about your marketing tool or agency.
+
+Format: Write naturally, as if explaining to someone. Include:
+
+1. What your tool/service does
+2. Who it's for
+3. Key features and benefits
+4. Unique selling points
+5. Common use cases
+6. Results/outcomes clients achieve
+
+Example:
+---
+
+AgencyHub is a comprehensive marketing automation platform designed specifically for digital marketing agencies managing multiple clients.
+
+Our platform helps agency owners and operators:
+- Manage up to 100+ clients from one dashboard
+- Automate client reporting (saves 15 hours/week on average)
+- White-label everything with client branding
+- Track campaigns across Google Ads, Facebook, LinkedIn, and email
+- Collaborate with team members in real-time
+- Generate professional proposals and contracts
+
+Key features:
+- Client Portal: Branded dashboards where clients see their metrics 24/7
+- Smart Reporting: AI-powered insights and automated monthly reports
+- Campaign Manager: Plan, execute, and track all campaigns in one place
+- Team Workspace: Assign tasks, share files, comment on projects
+- Billing & Invoicing: Automated recurring billing and payment tracking
+
+Our typical customer is a marketing agency with 5-50 employees managing 20-200 clients. They use AgencyHub to:
+1. Reduce manual reporting time by 80%
+2. Improve client retention through transparency
+3. Scale operations without hiring more people
+4. Increase profit margins by 15-30%
+
+Unique advantages:
+- Built BY agency owners FOR agency owners
+- Integrates with 50+ marketing platforms
+- Dedicated customer success manager
+- Training and certification program for team members
+
+---
+
+Replace this example with your actual tool/agency information!
