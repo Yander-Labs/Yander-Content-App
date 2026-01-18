@@ -40,8 +40,12 @@ logs/*.log
 
 # Output files
 output/*.json
+output/*.mp4
 output/scripts/*.json
 output/mindmaps/*.svg
+output/mindmaps/*.png
+output/mindmaps/*.json
+output/mindmaps/test_*/
 output/videos/*
 
 # Keep directory structure
@@ -55,6 +59,9 @@ data/*
 !data/.gitkeep
 !data/example_tool_info.txt
 !data/content_style_references.json
+!data/content_guidelines.md
+!data/jordan_hayes_info.txt
+!data/yander_info.txt
 
 # Temporary files
 *.tmp
