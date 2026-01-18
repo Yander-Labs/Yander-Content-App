@@ -31,3 +31,6 @@ pyyaml>=6.0.1
 # Utilities
 colorama>=0.4.6
 tqdm>=4.66.1
+
+# Video editing
+pydub>=0.25.1

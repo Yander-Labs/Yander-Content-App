@@ -187,6 +187,42 @@ def notify_editor_command(args):
     print(json.dumps(result, indent=2))
 
 
+def edit_video_command(args):
+    """Handle video editing command."""
+    from agents import VideoEditingAgent
+
+    print(f"{Fore.CYAN}Starting video editing...{Style.RESET_ALL}")
+
+    agent = VideoEditingAgent()
+
+    try:
+        result = agent.edit_video(
+            screen_recording=args.screen,
+            face_cam=args.face_cam,
+            output_path=args.output,
+            silence_thresh=args.silence_thresh,
+            min_silence_ms=args.min_silence,
+            padding_ms=args.padding
+        )
+
+        print(f"\n{Fore.GREEN}Video editing complete!{Style.RESET_ALL}")
+        print(f"  Original duration: {result['original_duration_sec']:.2f}s")
+        print(f"  Final duration:    {result['final_duration_sec']:.2f}s")
+        print(f"  Time removed:      {result['time_removed_sec']:.2f}s")
+        print(f"  Segments kept:     {result['segments_kept']}")
+        print(f"\n{Fore.GREEN}Output saved to: {result['output_path']}{Style.RESET_ALL}")
+
+        # Save result JSON
+        result_file = result['output_path'].replace('.mp4', '_result.json')
+        with open(result_file, 'w') as f:
+            json.dump(result, f, indent=2)
+        print(f"Result details: {result_file}")
+
+    except Exception as e:
+        print(f"{Fore.RED}Error: {str(e)}{Style.RESET_ALL}")
+        sys.exit(1)
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -244,6 +280,16 @@ Examples:
     notify_parser.add_argument('--files', required=True, help='Comma-separated list of video files')
     notify_parser.add_argument('--notes', help='Additional notes for editor')
     notify_parser.set_defaults(func=notify_editor_command)
+
+    # Edit video command
+    edit_parser = subparsers.add_parser('edit-video', help='Auto-edit video by removing silences')
+    edit_parser.add_argument('--screen', required=True, help='Path to screen recording video')
+    edit_parser.add_argument('--face-cam', help='Path to face cam video (optional)')
+    edit_parser.add_argument('--output', help='Output path for edited video')
+    edit_parser.add_argument('--silence-thresh', type=int, default=-40, help='Silence threshold in dB (default: -40)')
+    edit_parser.add_argument('--min-silence', type=int, default=800, help='Minimum silence duration in ms (default: 800)')
+    edit_parser.add_argument('--padding', type=int, default=100, help='Padding around cuts in ms (default: 100)')
+    edit_parser.set_defaults(func=edit_video_command)
 
     args = parser.parse_args()
 

@@ -8,6 +8,7 @@ from .scriptwriting_agent import ScriptwritingAgent
 from .mindmap_agent import MindmapAgent
 from .notion_agent import NotionAgent
 from .editor_notification_agent import EditorNotificationAgent
+from .video_editing_agent import VideoEditingAgent
 
 __all__ = [
     'BaseAgent',
@@ -15,5 +16,6 @@ __all__ = [
     'ScriptwritingAgent',
     'MindmapAgent',
     'NotionAgent',
-    'EditorNotificationAgent'
+    'EditorNotificationAgent',
+    'VideoEditingAgent'
 ]

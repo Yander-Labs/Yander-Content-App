@@ -1,20 +1,26 @@
 """
 Mindmap Generator Agent
-Creates visual mindmaps in SVG format for use in YouTube videos.
+Creates visual mindmaps using D3.js for professional, video-ready graphics.
 """
 
 import json
-import svgwrite
+import subprocess
+import os
 from typing import Dict, Any, List, Optional, Tuple
 from .base_agent import BaseAgent
 from datetime import datetime
+from pathlib import Path
 
 
 class MindmapAgent(BaseAgent):
-    """Agent that generates SVG mindmaps for visualizing content ideas."""
+    """Agent that generates professional D3.js mindmaps for visualizing content ideas."""
+
+    # Available themes for mindmap rendering
+    THEMES = ['modern', 'light', 'vibrant', 'minimal']
 
     def __init__(self):
         super().__init__(name="Mindmap Agent")
+        self.renderer_path = Path(__file__).parent.parent / "mindmap-renderer"
         self.system_prompt = """You are an expert at creating structured mindmaps for educational content.
 
 Your role is to:
@@ -109,160 +115,180 @@ Use appropriate colors to categorize topics."""
                 "raw_response": response
             }
 
+    def _ensure_renderer_installed(self) -> bool:
+        """
+        Ensure the Node.js renderer dependencies are installed.
+
+        Returns:
+            True if dependencies are installed successfully
+        """
+        node_modules = self.renderer_path / "node_modules"
+        if not node_modules.exists():
+            self.logger.info("Installing mindmap renderer dependencies...")
+            try:
+                result = subprocess.run(
+                    ["npm", "install"],
+                    cwd=self.renderer_path,
+                    capture_output=True,
+                    text=True,
+                    timeout=120
+                )
+                if result.returncode != 0:
+                    self.logger.error(f"npm install failed: {result.stderr}")
+                    return False
+                self.logger.info("Renderer dependencies installed successfully")
+            except subprocess.TimeoutExpired:
+                self.logger.error("npm install timed out")
+                return False
+            except FileNotFoundError:
+                self.logger.error("npm not found. Please install Node.js")
+                return False
+        return True
+
+    def render_with_d3(self,
+                       structure: Dict[str, Any],
+                       output_dir: str,
+                       width: int = 1920,
+                       height: int = 1080,
+                       theme: str = "modern") -> Dict[str, str]:
+        """
+        Render mindmap using D3.js Node.js renderer.
+
+        Args:
+            structure: Mindmap structure dictionary
+            output_dir: Directory to save output files
+            width: Output width in pixels
+            height: Output height in pixels
+            theme: Visual theme ("modern", "light", "vibrant", "minimal")
+
+        Returns:
+            Dictionary with paths to generated files (svg, png)
+        """
+        self.logger.info(f"Rendering mindmap with D3.js: {structure.get('title', 'Untitled')}")
+
+        # Ensure renderer is installed
+        if not self._ensure_renderer_installed():
+            raise RuntimeError("Failed to install mindmap renderer dependencies")
+
+        # Create temp file for structure
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        temp_structure_file = self.renderer_path / f"temp_structure_{timestamp}.json"
+
+        try:
+            # Write structure to temp file
+            with open(temp_structure_file, 'w') as f:
+                json.dump(structure, f, indent=2)
+
+            # Ensure output directory exists
+            os.makedirs(output_dir, exist_ok=True)
+
+            # Run the renderer
+            cmd = [
+                "node",
+                str(self.renderer_path / "render.js"),
+                str(temp_structure_file),
+                output_dir,
+                f"--theme={theme}",
+                f"--width={width}",
+                f"--height={height}"
+            ]
+
+            self.logger.info(f"Running renderer: {' '.join(cmd)}")
+
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=60
+            )
+
+            if result.returncode != 0:
+                self.logger.error(f"Renderer failed: {result.stderr}")
+                raise RuntimeError(f"Mindmap renderer failed: {result.stderr}")
+
+            # Parse output to get file paths
+            output_lines = result.stdout.strip().split('\n')
+            files = {}
+
+            for line in output_lines:
+                if 'SVG saved:' in line:
+                    files['svg'] = line.split('SVG saved:')[1].strip()
+                elif 'PNG saved:' in line:
+                    files['png'] = line.split('PNG saved:')[1].strip()
+
+            self.logger.info(f"Renderer output: {files}")
+            return files
+
+        finally:
+            # Cleanup temp file
+            if temp_structure_file.exists():
+                temp_structure_file.unlink()
+
     def create_svg_mindmap(self,
                           structure: Dict[str, Any],
                           width: int = 1920,
                           height: int = 1080,
                           style: str = "modern") -> str:
         """
-        Create an SVG mindmap from structure.
+        Create an SVG mindmap from structure (legacy method - now uses D3.js).
 
         Args:
             structure: Mindmap structure dictionary
             width: SVG width in pixels
             height: SVG height in pixels
-            style: Visual style ("modern", "minimal", "colorful")
+            style: Visual style ("modern", "light", "vibrant", "minimal")
 
         Returns:
             SVG content as string
         """
         self.logger.info(f"Creating SVG mindmap: {structure.get('title', 'Untitled')}")
 
-        # Create SVG drawing
-        dwg = svgwrite.Drawing(size=(width, height))
+        # Use the D3.js renderer
+        import tempfile
+        with tempfile.TemporaryDirectory() as temp_dir:
+            files = self.render_with_d3(structure, temp_dir, width, height, style)
+            if 'svg' in files:
+                with open(files['svg'], 'r') as f:
+                    return f.read()
 
-        # Add background
+        # Fallback to simple SVG if renderer fails
+        self.logger.warning("D3.js renderer failed, using fallback")
+        return self._create_fallback_svg(structure, width, height)
+
+    def _create_fallback_svg(self, structure: Dict[str, Any], width: int, height: int) -> str:
+        """
+        Create a simple fallback SVG if D3.js renderer is unavailable.
+
+        Args:
+            structure: Mindmap structure dictionary
+            width: SVG width in pixels
+            height: SVG height in pixels
+
+        Returns:
+            SVG content as string
+        """
+        import svgwrite
+        dwg = svgwrite.Drawing(size=(width, height))
         dwg.add(dwg.rect(insert=(0, 0), size=(width, height), fill='#1a1a2e'))
 
-        # Center point
         center_x, center_y = width // 2, height // 2
-
-        # Draw central topic
         title = structure.get('title', 'Mindmap')
-        title_box_width = max(300, len(title) * 12)
-        title_box_height = 80
 
-        # Central box with gradient
+        # Central gradient
         central_gradient = dwg.defs.add(dwg.linearGradient(id="central_grad"))
         central_gradient.add_stop_color(offset='0%', color='#667eea')
         central_gradient.add_stop_color(offset='100%', color='#764ba2')
 
+        # Central box
+        title_box_width = max(300, len(title) * 12)
         dwg.add(dwg.rect(
-            insert=(center_x - title_box_width//2, center_y - title_box_height//2),
-            size=(title_box_width, title_box_height),
-            fill='url(#central_grad)',
-            rx=10,
-            ry=10,
-            stroke='#ffffff',
-            stroke_width=3
+            insert=(center_x - title_box_width//2, center_y - 40),
+            size=(title_box_width, 80), fill='url(#central_grad)',
+            rx=10, ry=10, stroke='#ffffff', stroke_width=3
         ))
-
-        # Central title text
-        dwg.add(dwg.text(
-            title,
-            insert=(center_x, center_y + 8),
-            text_anchor='middle',
-            font_size='28px',
-            font_weight='bold',
-            fill='#ffffff',
-            font_family='Arial, sans-serif'
-        ))
-
-        # Draw branches
-        branches = structure.get('branches', [])
-        num_branches = len(branches)
-
-        for i, branch in enumerate(branches):
-            # Calculate angle for this branch
-            angle = (2 * 3.14159 * i / num_branches) - (3.14159 / 2)  # Start at top
-
-            # Branch position
-            branch_distance = 400
-            branch_x = center_x + int(branch_distance * 0.7 * (1 if i % 2 == 0 else -1) * abs(angle / 3.14159))
-            branch_y = center_y + int(branch_distance * 0.5 * (i - num_branches/2) / (num_branches/2))
-
-            # Ensure branches stay within bounds
-            branch_x = max(200, min(width - 200, branch_x))
-            branch_y = max(150, min(height - 150, branch_y))
-
-            # Draw connecting line
-            dwg.add(dwg.line(
-                start=(center_x, center_y),
-                end=(branch_x, branch_y),
-                stroke=branch.get('color', '#00d4ff'),
-                stroke_width=3,
-                opacity=0.6
-            ))
-
-            # Draw branch box
-            branch_label = branch.get('label', f'Branch {i+1}')
-            branch_width = max(180, len(branch_label) * 10)
-            branch_height = 60
-
-            dwg.add(dwg.rect(
-                insert=(branch_x - branch_width//2, branch_y - branch_height//2),
-                size=(branch_width, branch_height),
-                fill=branch.get('color', '#00d4ff'),
-                rx=8,
-                ry=8,
-                stroke='#ffffff',
-                stroke_width=2
-            ))
-
-            dwg.add(dwg.text(
-                branch_label,
-                insert=(branch_x, branch_y + 6),
-                text_anchor='middle',
-                font_size='18px',
-                font_weight='bold',
-                fill='#ffffff',
-                font_family='Arial, sans-serif'
-            ))
-
-            # Draw subbranches
-            subbranches = branch.get('subbranches', [])
-            for j, subbranch in enumerate(subbranches[:3]):  # Max 3 subbranches per branch
-                # Subbranch position (stacked vertically near branch)
-                sub_x = branch_x + 250
-                sub_y = branch_y + (j - 1) * 80
-
-                # Ensure subbranches stay within bounds
-                sub_x = max(100, min(width - 100, sub_x))
-                sub_y = max(100, min(height - 100, sub_y))
-
-                # Draw connecting line
-                dwg.add(dwg.line(
-                    start=(branch_x + branch_width//2, branch_y),
-                    end=(sub_x - 70, sub_y),
-                    stroke=branch.get('color', '#00d4ff'),
-                    stroke_width=2,
-                    opacity=0.4,
-                    stroke_dasharray='5,5'
-                ))
-
-                # Draw subbranch
-                sub_label = subbranch.get('label', f'Sub {j+1}')
-                sub_width = max(140, len(sub_label) * 9)
-                sub_height = 45
-
-                dwg.add(dwg.rect(
-                    insert=(sub_x - sub_width//2, sub_y - sub_height//2),
-                    size=(sub_width, sub_height),
-                    fill='#2d2d44',
-                    rx=6,
-                    ry=6,
-                    stroke=branch.get('color', '#00d4ff'),
-                    stroke_width=2
-                ))
-
-                dwg.add(dwg.text(
-                    sub_label,
-                    insert=(sub_x, sub_y + 5),
-                    text_anchor='middle',
-                    font_size='14px',
-                    fill='#ffffff',
-                    font_family='Arial, sans-serif'
-                ))
+        dwg.add(dwg.text(title, insert=(center_x, center_y + 8),
+            text_anchor='middle', font_size='28px', font_weight='bold',
+            fill='#ffffff', font_family='Arial, sans-serif'))
 
         return dwg.tostring()
 
@@ -273,44 +299,66 @@ Use appropriate colors to categorize topics."""
                 height: int = 1080,
                 style: str = "modern") -> Dict[str, Any]:
         """
-        Execute mindmap generation.
+        Execute mindmap generation with D3.js renderer.
 
         Args:
             content: Video script or post content
             content_type: Type of content ("video" or "post")
-            width: SVG width
-            height: SVG height
-            style: Visual style
+            width: Output width in pixels
+            height: Output height in pixels
+            style: Visual theme ("modern", "light", "vibrant", "minimal")
 
         Returns:
-            Dictionary containing mindmap structure and SVG file path
+            Dictionary containing mindmap structure and file paths
         """
-        # Generate structure
+        # Generate structure using Claude
         structure = self.generate_mindmap_structure(content, content_type)
 
         if 'error' in structure:
             return structure
 
-        # Create SVG
-        svg_content = self.create_svg_mindmap(structure, width, height, style)
-
-        # Save SVG
+        # Save structure first
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        svg_filename = f"mindmap_{timestamp}.svg"
-        svg_path = self.save_output(svg_content, svg_filename, "output/mindmaps")
-
-        # Save structure
         structure_filename = f"mindmap_structure_{timestamp}.json"
         structure_path = self.save_output(structure, structure_filename, "output/mindmaps")
 
-        result = {
-            "structure": structure,
-            "svg_file": svg_path,
-            "structure_file": structure_path,
-            "dimensions": {"width": width, "height": height}
-        }
+        # Render with D3.js
+        output_dir = str(Path(__file__).parent.parent / "output" / "mindmaps")
 
-        self.logger.info(f"Mindmap generated: {svg_path}")
+        try:
+            files = self.render_with_d3(structure, output_dir, width, height, style)
+
+            result = {
+                "structure": structure,
+                "svg_file": files.get('svg'),
+                "png_file": files.get('png'),
+                "structure_file": structure_path,
+                "dimensions": {"width": width, "height": height},
+                "theme": style,
+                "renderer": "d3js"
+            }
+
+            self.logger.info(f"Mindmap generated with D3.js: {files.get('svg')}")
+
+        except Exception as e:
+            self.logger.warning(f"D3.js renderer failed: {e}, using fallback")
+
+            # Use fallback SVG renderer
+            svg_content = self._create_fallback_svg(structure, width, height)
+            svg_filename = f"mindmap_{timestamp}.svg"
+            svg_path = self.save_output(svg_content, svg_filename, "output/mindmaps")
+
+            result = {
+                "structure": structure,
+                "svg_file": svg_path,
+                "png_file": None,
+                "structure_file": structure_path,
+                "dimensions": {"width": width, "height": height},
+                "theme": style,
+                "renderer": "fallback"
+            }
+
+            self.logger.info(f"Mindmap generated with fallback: {svg_path}")
 
         return result
 

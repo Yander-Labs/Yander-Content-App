@@ -1,0 +1,15 @@
+{
+  "name": "mindmap-renderer",
+  "version": "1.0.0",
+  "description": "D3.js-based mindmap renderer with Puppeteer export",
+  "main": "render.js",
+  "type": "module",
+  "scripts": {
+    "render": "node render.js"
+  },
+  "dependencies": {
+    "d3": "^7.8.5",
+    "jsdom": "^24.0.0",
+    "puppeteer": "^22.0.0"
+  }
+}
