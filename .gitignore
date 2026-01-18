@@ -60,3 +60,9 @@ data/*
 *.tmp
 *.bak
 .cache/
+
+# Node.js
+node_modules/
+
+# Video samples (large files)
+video_samples/
