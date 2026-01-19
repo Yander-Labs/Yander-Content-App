@@ -223,6 +223,38 @@ def edit_video_command(args):
         sys.exit(1)
 
 
+def transcribe_command(args):
+    """Handle transcription command."""
+    from agents import TranscriptionAgent
+
+    print(f"{Fore.CYAN}Starting transcription...{Style.RESET_ALL}")
+
+    agent = TranscriptionAgent(
+        model_size=args.model_size,
+        device=args.device,
+        language=args.language if args.language != "auto" else None,
+    )
+
+    try:
+        result = agent.transcribe(
+            input_path=args.input,
+            output_path=args.output,
+            beam_size=args.beam_size,
+            vad_filter=not args.no_vad,
+            cleanup_with_claude=args.cleanup,
+        )
+
+        print(f"\n{Fore.GREEN}Transcription complete!{Style.RESET_ALL}")
+        print(f"  Duration:    {result['duration_seconds']:.2f}s")
+        print(f"  Words:       {result['word_count']}")
+        print(f"  Language:    {result['language']}")
+        print(f"\n{Fore.GREEN}Transcript saved to: {result['output_path']}{Style.RESET_ALL}")
+
+    except Exception as e:
+        print(f"{Fore.RED}Error: {str(e)}{Style.RESET_ALL}")
+        sys.exit(1)
+
+
 def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -290,6 +322,25 @@ Examples:
     edit_parser.add_argument('--min-silence', type=int, default=800, help='Minimum silence duration in ms (default: 800)')
     edit_parser.add_argument('--padding', type=int, default=100, help='Padding around cuts in ms (default: 100)')
     edit_parser.set_defaults(func=edit_video_command)
+
+    # Transcribe command
+    transcribe_parser = subparsers.add_parser('transcribe', help='Transcribe video/audio to text')
+    transcribe_parser.add_argument('--input', '-i', required=True, help='Path to video or audio file')
+    transcribe_parser.add_argument('--output', '-o', help='Output path for transcript')
+    transcribe_parser.add_argument('--model-size', default='base',
+                                   choices=['tiny', 'base', 'small', 'medium', 'large-v3'],
+                                   help='Whisper model size (default: base)')
+    transcribe_parser.add_argument('--device', default='auto', choices=['auto', 'cpu', 'cuda'],
+                                   help='Device to run on (default: auto)')
+    transcribe_parser.add_argument('--language', default='en',
+                                   help='Language code or "auto" for detection (default: en)')
+    transcribe_parser.add_argument('--beam-size', type=int, default=5,
+                                   help='Beam size for decoding (default: 5)')
+    transcribe_parser.add_argument('--no-vad', action='store_true',
+                                   help='Disable Voice Activity Detection')
+    transcribe_parser.add_argument('--cleanup', action='store_true',
+                                   help='Use Claude to clean up transcript')
+    transcribe_parser.set_defaults(func=transcribe_command)
 
     args = parser.parse_args()
 

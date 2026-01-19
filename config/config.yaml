@@ -22,6 +22,18 @@ agents:
     default_height: 1080
     style: "modern"
 
+  transcription:
+    model: "claude-sonnet-4-5-20250929"
+    max_tokens: 4096
+    temperature: 0.3
+    whisper:
+      model_size: "base"        # tiny, base, small, medium, large-v3
+      device: "auto"            # auto, cpu, cuda
+      compute_type: "auto"      # auto, int8, float16, float32
+      language: "en"            # ISO language code or null for auto-detect
+      beam_size: 5
+      vad_filter: true
+
 # Content Settings
 content:
   video:
@@ -49,6 +61,7 @@ output:
     scripts: "output/scripts"
     mindmaps: "output/mindmaps"
     videos: "output/videos"
+    transcripts: "output/transcripts"
     results: "output"
 
 # Logging Settings

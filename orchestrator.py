@@ -18,6 +18,8 @@ from agents.scriptwriting_agent import ScriptwritingAgent
 from agents.mindmap_agent import MindmapAgent
 from agents.notion_agent import NotionAgent
 from agents.editor_notification_agent import EditorNotificationAgent
+from agents.transcription_agent import TranscriptionAgent
+from agents.video_editing_agent import VideoEditingAgent
 
 # Initialize colorama
 init(autoreset=True)
@@ -32,6 +34,8 @@ class ContentCreationOrchestrator:
         self.mindmap_agent = MindmapAgent()
         self.notion_agent = NotionAgent()
         self.editor_agent = EditorNotificationAgent()
+        self.transcription_agent = None  # Lazy-loaded due to model size
+        self.video_editing_agent = None  # Lazy-loaded
 
         print(f"{Fore.GREEN}✓ Content Creation Orchestrator initialized{Style.RESET_ALL}")
         print(f"{Fore.CYAN}All agents loaded and ready{Style.RESET_ALL}\n")
@@ -305,6 +309,87 @@ class ContentCreationOrchestrator:
 
         print(f"\n{Fore.GREEN}✓ Batch creation complete: {count} posts{Style.RESET_ALL}\n")
         return results
+
+    def transcribe_video(
+        self,
+        video_path: str,
+        output_path: Optional[str] = None,
+        model_size: str = "base",
+        cleanup_with_claude: bool = False,
+    ) -> Dict[str, Any]:
+        """
+        Transcribe a video to text.
+
+        Args:
+            video_path: Path to video file
+            output_path: Output path for transcript
+            model_size: Whisper model size (tiny, base, small, medium, large-v3)
+            cleanup_with_claude: Use Claude to clean up transcript
+
+        Returns:
+            Dictionary with transcription results
+        """
+        print(f"\n{Fore.YELLOW}{'='*60}")
+        print(f"{Fore.YELLOW}TRANSCRIBING VIDEO")
+        print(f"{Fore.YELLOW}{'='*60}{Style.RESET_ALL}\n")
+
+        # Lazy-load transcription agent
+        if self.transcription_agent is None or self.transcription_agent.model_size != model_size:
+            self.transcription_agent = TranscriptionAgent(model_size=model_size)
+
+        result = self.transcription_agent.execute(
+            input_path=video_path,
+            output_path=output_path,
+            cleanup_with_claude=cleanup_with_claude,
+        )
+
+        print(f"{Fore.GREEN}✓ Transcription complete: {result['word_count']} words{Style.RESET_ALL}\n")
+
+        return result
+
+    def edit_and_transcribe_video(
+        self,
+        screen_recording: str,
+        output_dir: str = "output",
+        model_size: str = "base",
+    ) -> Dict[str, Any]:
+        """
+        Full workflow: edit video (remove silences) then transcribe.
+
+        Args:
+            screen_recording: Path to raw video
+            output_dir: Output directory
+            model_size: Whisper model size for transcription
+
+        Returns:
+            Dictionary with editing and transcription results
+        """
+        print(f"\n{Fore.MAGENTA}{'='*60}")
+        print(f"{Fore.MAGENTA}EDIT AND TRANSCRIBE WORKFLOW")
+        print(f"{Fore.MAGENTA}{'='*60}{Style.RESET_ALL}\n")
+
+        result = {}
+
+        # Lazy-load video editing agent
+        if self.video_editing_agent is None:
+            self.video_editing_agent = VideoEditingAgent()
+
+        # Step 1: Edit video
+        print(f"{Fore.CYAN}[1/2] Editing video...{Style.RESET_ALL}")
+        edit_result = self.video_editing_agent.execute(screen_recording=screen_recording)
+        result["edit"] = edit_result
+
+        # Step 2: Transcribe edited video
+        print(f"{Fore.CYAN}[2/2] Transcribing edited video...{Style.RESET_ALL}")
+        transcript_result = self.transcribe_video(
+            video_path=edit_result["output_path"], model_size=model_size
+        )
+        result["transcript"] = transcript_result
+
+        result["status"] = "complete"
+        result["created_at"] = datetime.now().isoformat()
+
+        return result
 
 
 def main():

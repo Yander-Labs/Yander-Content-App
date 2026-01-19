@@ -34,3 +34,6 @@ tqdm>=4.66.1
 
 # Video editing
 pydub>=0.25.1
+
+# Transcription
+faster-whisper>=1.0.0
