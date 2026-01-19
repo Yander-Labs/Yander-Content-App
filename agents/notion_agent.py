@@ -27,6 +27,39 @@ class NotionAgent(BaseAgent):
 
         self.database_id = os.getenv("NOTION_DATABASE_ID")
 
+    def _split_text_into_chunks(self, text: str, max_length: int = 1800) -> List[str]:
+        """
+        Split text into chunks at sentence boundaries.
+
+        Args:
+            text: Text to split
+            max_length: Maximum length per chunk
+
+        Returns:
+            List of text chunks
+        """
+        if len(text) <= max_length:
+            return [text]
+
+        chunks = []
+        current_chunk = ""
+
+        # Split by sentences (period followed by space)
+        sentences = text.replace('. ', '.|').split('|')
+
+        for sentence in sentences:
+            if len(current_chunk) + len(sentence) + 1 <= max_length:
+                current_chunk += sentence + " "
+            else:
+                if current_chunk:
+                    chunks.append(current_chunk.strip())
+                current_chunk = sentence + " "
+
+        if current_chunk:
+            chunks.append(current_chunk.strip())
+
+        return chunks
+
     def create_video_entry(self,
                           idea: Dict[str, Any],
                           script: Dict[str, Any],
@@ -138,7 +171,7 @@ class NotionAgent(BaseAgent):
             })
 
             # Add main sections
-            for section in script.get('main_sections', [])[:5]:  # Limit sections to avoid too many blocks
+            for section in script.get('main_sections', [])[:8]:  # Limit sections to avoid too many blocks
                 toggle_children.append({
                     "object": "block",
                     "type": "heading_3",
@@ -147,15 +180,18 @@ class NotionAgent(BaseAgent):
                     }
                 })
 
-                # Add script content (truncated to avoid Notion limits)
-                script_text = section.get('script', '')[:1900]
-                toggle_children.append({
-                    "object": "block",
-                    "type": "paragraph",
-                    "paragraph": {
-                        "rich_text": [{"type": "text", "text": {"content": script_text}}]
-                    }
-                })
+                # Split long script content into multiple paragraphs to avoid truncation
+                script_text = section.get('script', '')
+                # Split into chunks of ~1800 chars at sentence boundaries
+                chunks = self._split_text_into_chunks(script_text, max_length=1800)
+                for chunk in chunks[:3]:  # Limit to 3 paragraphs per section
+                    toggle_children.append({
+                        "object": "block",
+                        "type": "paragraph",
+                        "paragraph": {
+                            "rich_text": [{"type": "text", "text": {"content": chunk}}]
+                        }
+                    })
 
             # Add CTA
             toggle_children.append({
@@ -372,6 +408,75 @@ class NotionAgent(BaseAgent):
         except Exception as e:
             self.logger.error(f"Error creating Notion post entry: {str(e)}")
             return None
+
+    def search_page_by_title(self, title: str) -> Optional[Dict[str, Any]]:
+        """
+        Search for a page by title in the database.
+
+        Args:
+            title: Title to search for
+
+        Returns:
+            Page data if found, None otherwise
+        """
+        if not self.notion_client or not self.database_id:
+            self.logger.error("Notion client not initialized")
+            return None
+
+        try:
+            self.logger.info(f"Searching for page: {title}")
+
+            response = self.notion_client.databases.query(
+                database_id=self.database_id,
+                filter={
+                    "property": "Name",
+                    "title": {
+                        "contains": title[:50]  # Use first 50 chars for matching
+                    }
+                }
+            )
+
+            results = response.get("results", [])
+            if results:
+                page = results[0]
+                self.logger.info(f"Found page: {page['id']}")
+                return {
+                    "page_id": page["id"],
+                    "title": page["properties"]["Name"]["title"][0]["text"]["content"] if page["properties"]["Name"]["title"] else "Untitled",
+                    "url": page["url"]
+                }
+
+            self.logger.info("Page not found")
+            return None
+
+        except Exception as e:
+            self.logger.error(f"Error searching for page: {str(e)}")
+            return None
+
+    def archive_page(self, page_id: str) -> bool:
+        """
+        Archive (soft delete) a Notion page.
+
+        Args:
+            page_id: Notion page ID to archive
+
+        Returns:
+            True if successful
+        """
+        if not self.notion_client:
+            return False
+
+        try:
+            self.notion_client.pages.update(
+                page_id=page_id,
+                archived=True
+            )
+            self.logger.info(f"Archived page: {page_id}")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Error archiving page: {str(e)}")
+            return False
 
     def update_status(self, page_id: str, status: str) -> bool:
         """

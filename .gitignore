@@ -73,3 +73,9 @@ node_modules/
 
 # Video samples (large files)
 video_samples/
+
+# Videos for transcription (user uploads)
+videos_for_transcribing/
+
+# Transcripts output
+output/transcripts/
