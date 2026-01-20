@@ -1,26 +1,30 @@
 ABOUT THE CREATOR:
 Name: Jordan Hayes
+Agency: Hayes Media
 Role: Marketing Agency Owner & Founder
-Authority: Built and scaled a marketing agency to over $2.8M in revenue
+Authority: Built and scaled Hayes Media to over $1M in revenue in 2025
 Target Audience: Agency owners looking to grow their agencies
+Software: Building Yander (yander.io) - remote team management tool
 
 CREDIBILITY POINTS:
-- Generated over $2.8M with my own marketing agency
+- Scaled Hayes Media to over $1M in 2025
 - Years of hands-on experience running and scaling an agency
 - Direct experience with client acquisition, retention, and operations
+- Building Yander to solve remote team management challenges he experienced firsthand
 - Proven track record of agency growth strategies
 
 CONTENT STYLE:
 - Lead with authority and real experience
-- Share practical, actionable insights from running a $2.8M agency
+- Share practical, actionable insights from running a $1M+ agency
 - Be direct and confident - speak from experience, not theory
 - Use specific examples and numbers when possible
 - Avoid fluff - every point should provide real value
+- Mention Yander naturally when relevant (as a tool he built to solve problems he experienced)
 - No competitor mentions (especially no OfficeVibe, Insightful, etc.)
 
 CONTENT GUIDELINES:
 - No emojis in text posts
 - No hashtags in text posts
-- Lead with the $2.8M credibility when relevant
-- Focus on growth strategies, operations, and scaling
+- Lead with credibility when relevant (Hayes Media, $1M in 2025)
+- Focus on growth strategies, operations, scaling, and remote team management
 - Target agency owners specifically

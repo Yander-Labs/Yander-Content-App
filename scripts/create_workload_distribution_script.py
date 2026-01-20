@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 """
 Creates a script about unequal workload distribution in remote marketing agencies.
+Includes Notion page, AI-generated images, and Talking Points subpage.
 """
 
 import os
 import sys
-import json
-from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from agents.notion_agent import NotionAgent
+from agents import create_video_with_talking_points
 
 WORKLOAD_DISTRIBUTION_SCRIPT = {
     "title": "Why '3 Clients Per Person' Is a Lie: The Hidden Workload Problem Killing Your Agency",
@@ -77,52 +76,22 @@ WORKLOAD_DISTRIBUTION_SCRIPT = {
 
 
 def main():
-    print("=" * 60)
-    print("CREATING WORKLOAD DISTRIBUTION VIDEO SCRIPT")
-    print("=" * 60)
-
-    notion_agent = NotionAgent()
-
-    # Save script locally
-    print("\n[1/2] Saving script locally...")
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    script_path = f"output/scripts/script_workload_distribution_{timestamp}.json"
-
-    os.makedirs(os.path.dirname(script_path), exist_ok=True)
-    with open(script_path, 'w', encoding='utf-8') as f:
-        json.dump(WORKLOAD_DISTRIBUTION_SCRIPT, f, indent=2)
-    print(f"  Saved to: {script_path}")
-
-    # Check character counts
-    print("\n  Section character counts:")
+    # Check character counts first
+    print("Section character counts:")
     for section in WORKLOAD_DISTRIBUTION_SCRIPT["main_sections"]:
         char_count = len(section["script"])
         status = "OK" if char_count < 800 else "LONG" if char_count < 1000 else "TOO LONG"
-        print(f"    - {section['section_title'][:40]:<40}: {char_count:>4} chars [{status}]")
+        print(f"  - {section['section_title'][:40]:<40}: {char_count:>4} chars [{status}]")
+    print()
 
-    # Create Notion entry
-    print(f"\n[2/2] Creating Notion entry...")
+    # Create complete video content package with images and talking points
+    result = create_video_with_talking_points(
+        script=WORKLOAD_DISTRIBUTION_SCRIPT,
+        generate_images=True,  # Set to False to skip image generation
+        print_progress=True
+    )
 
-    idea = {
-        "title": WORKLOAD_DISTRIBUTION_SCRIPT["title"],
-        "hook": WORKLOAD_DISTRIBUTION_SCRIPT["hook"]["script"],
-        "key_points": [section["section_title"] for section in WORKLOAD_DISTRIBUTION_SCRIPT["main_sections"]]
-    }
-
-    page_id = notion_agent.create_video_entry(idea, WORKLOAD_DISTRIBUTION_SCRIPT)
-
-    if page_id:
-        page_url = f"https://notion.so/{page_id.replace('-', '')}"
-        print(f"  Created Notion page: {page_url}")
-    else:
-        print("  Error: Could not create Notion page")
-
-    print("\n" + "=" * 60)
-    print("SCRIPT CREATED")
-    print("=" * 60)
-    print(f"\nTitle: {WORKLOAD_DISTRIBUTION_SCRIPT['title']}")
-    print(f"Duration: ~{WORKLOAD_DISTRIBUTION_SCRIPT['estimated_length_minutes']} minutes")
-    print(f"Sections: {len(WORKLOAD_DISTRIBUTION_SCRIPT['main_sections'])}")
+    return result
 
 
 if __name__ == "__main__":

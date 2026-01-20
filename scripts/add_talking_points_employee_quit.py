@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """
-Creates a script about hidden signs employees are about to quit.
-Updated with Jordan's actual agency context.
-Includes Notion page, AI-generated images, and Talking Points subpage.
+Add talking points with images to the existing Employee Quit Signs video page.
 """
 
 import os
@@ -10,8 +8,10 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from agents import create_video_with_talking_points
+from agents.notion_agent import NotionAgent
+from agents.image_agent import ImageAgent
 
+# The script content
 EMPLOYEE_QUIT_SCRIPT = {
     "title": "The Hidden Signs Your Best Employees Are About to Quit (And You Don't Even Know It)",
     "estimated_length_minutes": 18,
@@ -82,22 +82,56 @@ EMPLOYEE_QUIT_SCRIPT = {
 
 
 def main():
-    # Check character counts first
-    print("Section character counts:")
-    for section in EMPLOYEE_QUIT_SCRIPT["main_sections"]:
-        char_count = len(section["script"])
-        status = "OK" if char_count < 800 else "LONG" if char_count < 1000 else "TOO LONG"
-        print(f"  - {section['section_title'][:40]:<40}: {char_count:>4} chars [{status}]")
-    print()
+    print("=" * 60)
+    print("ADDING TALKING POINTS TO EMPLOYEE QUIT SIGNS VIDEO")
+    print("=" * 60)
 
-    # Create complete video content package with images and talking points
-    result = create_video_with_talking_points(
-        script=EMPLOYEE_QUIT_SCRIPT,
-        generate_images=True,  # Set to False to skip image generation
-        print_progress=True
+    notion_agent = NotionAgent()
+    image_agent = ImageAgent()
+
+    if not image_agent.client:
+        print("Error: REPLICATE_API_TOKEN not found")
+        return
+
+    # Use the existing page ID from the URL
+    # URL: https://www.notion.so/The-Hidden-Signs-Your-Best-Employees-Are-About-to-Quit-And-You-Don-t-Even-Know-It-2edf5ce31c4881d1a92cecef40327732
+    page_id = "2edf5ce3-1c48-81d1-a92c-ecef40327732"
+
+    print(f"\n[1/3] Using existing Notion page...")
+    print(f"  Page ID: {page_id}")
+    print(f"  URL: https://notion.so/{page_id.replace('-', '')}")
+
+    # Generate images
+    print(f"\n[2/3] Generating AI images ({len(EMPLOYEE_QUIT_SCRIPT['main_sections']) + 1} images)...")
+    print("  This will take about 2 minutes due to rate limiting...")
+
+    images = image_agent.generate_section_images(
+        EMPLOYEE_QUIT_SCRIPT,
+        include_hook=True,
+        include_intro=False
     )
 
-    return result
+    print(f"\n  Generated {len(images)} images:")
+    for img in images:
+        print(f"    - {img['section']}")
+
+    # Create talking points subpage
+    print(f"\n[3/3] Creating Talking Points subpage...")
+
+    subpage_id = notion_agent.create_talking_points_subpage(
+        parent_page_id=page_id,
+        script=EMPLOYEE_QUIT_SCRIPT,
+        images=images
+    )
+
+    if subpage_id:
+        subpage_url = f"https://notion.so/{subpage_id.replace('-', '')}"
+        print(f"\n  SUCCESS!")
+        print(f"  Talking Points: {subpage_url}")
+    else:
+        print("\n  Error creating talking points subpage")
+
+    print("\n" + "=" * 60)
 
 
 if __name__ == "__main__":

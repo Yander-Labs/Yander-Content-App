@@ -510,6 +510,271 @@ class NotionAgent(BaseAgent):
             self.logger.error(f"Error updating status: {str(e)}")
             return False
 
+    def create_talking_points_subpage(self,
+                                      parent_page_id: str,
+                                      script: Dict[str, Any],
+                                      images: Optional[List[Dict[str, Any]]] = None) -> Optional[str]:
+        """
+        Create a talking points subpage under a video page.
+
+        This creates a quick-reference document with main points and
+        bullet points to help stay on track while recording.
+
+        Args:
+            parent_page_id: The parent video page ID
+            script: Video script dictionary with main_sections
+            images: Optional list of image dicts with 'section' and 'url' keys
+
+        Returns:
+            Subpage ID if successful
+        """
+        if not self.notion_client:
+            self.logger.error("Notion client not initialized")
+            return None
+
+        try:
+            self.logger.info(f"Creating talking points subpage for: {parent_page_id}")
+
+            # Build image lookup by section name
+            image_lookup = {}
+            if images:
+                for img in images:
+                    section_name = img.get('section', '').lower()
+                    image_lookup[section_name] = img.get('url')
+
+            # Build content blocks
+            children = []
+
+            # Add intro reminder
+            children.append({
+                "object": "block",
+                "type": "callout",
+                "callout": {
+                    "rich_text": [{"type": "text", "text": {"content": "Quick reference for recording. Each section has key points to hit."}}],
+                    "icon": {"emoji": "🎬"}
+                }
+            })
+
+            # Add hook section
+            hook_text = script.get('hook', {}).get('script', '')
+            if hook_text:
+                # Add image if available
+                if 'hook' in image_lookup:
+                    children.append({
+                        "object": "block",
+                        "type": "image",
+                        "image": {
+                            "type": "external",
+                            "external": {"url": image_lookup['hook']}
+                        }
+                    })
+
+                children.append({
+                    "object": "block",
+                    "type": "heading_2",
+                    "heading_2": {
+                        "rich_text": [{"type": "text", "text": {"content": "Hook"}}]
+                    }
+                })
+                # Extract key phrases from hook
+                hook_points = self._extract_talking_points(hook_text)
+                for point in hook_points:
+                    children.append({
+                        "object": "block",
+                        "type": "bulleted_list_item",
+                        "bulleted_list_item": {
+                            "rich_text": [{"type": "text", "text": {"content": point}}]
+                        }
+                    })
+
+            # Add intro section
+            intro_text = script.get('intro', {}).get('script', '')
+            if intro_text:
+                # Add image if available
+                if 'intro' in image_lookup:
+                    children.append({
+                        "object": "block",
+                        "type": "image",
+                        "image": {
+                            "type": "external",
+                            "external": {"url": image_lookup['intro']}
+                        }
+                    })
+
+                children.append({
+                    "object": "block",
+                    "type": "heading_2",
+                    "heading_2": {
+                        "rich_text": [{"type": "text", "text": {"content": "Intro"}}]
+                    }
+                })
+                intro_points = self._extract_talking_points(intro_text)
+                for point in intro_points:
+                    children.append({
+                        "object": "block",
+                        "type": "bulleted_list_item",
+                        "bulleted_list_item": {
+                            "rich_text": [{"type": "text", "text": {"content": point}}]
+                        }
+                    })
+
+            # Add main sections
+            for section in script.get('main_sections', [])[:10]:
+                section_title = section.get('section_title', 'Section')
+                section_text = section.get('script', '')
+
+                # Add image if available for this section
+                section_key = section_title.lower()
+                if section_key in image_lookup:
+                    children.append({
+                        "object": "block",
+                        "type": "image",
+                        "image": {
+                            "type": "external",
+                            "external": {"url": image_lookup[section_key]}
+                        }
+                    })
+
+                children.append({
+                    "object": "block",
+                    "type": "heading_2",
+                    "heading_2": {
+                        "rich_text": [{"type": "text", "text": {"content": section_title}}]
+                    }
+                })
+
+                # Extract talking points from section
+                talking_points = self._extract_talking_points(section_text)
+                for point in talking_points:
+                    children.append({
+                        "object": "block",
+                        "type": "bulleted_list_item",
+                        "bulleted_list_item": {
+                            "rich_text": [{"type": "text", "text": {"content": point}}]
+                        }
+                    })
+
+            # Add CTA section
+            cta_text = script.get('call_to_action', {}).get('script', '')
+            if cta_text:
+                # Add image if available
+                if 'call to action' in image_lookup:
+                    children.append({
+                        "object": "block",
+                        "type": "image",
+                        "image": {
+                            "type": "external",
+                            "external": {"url": image_lookup['call to action']}
+                        }
+                    })
+
+                children.append({
+                    "object": "block",
+                    "type": "heading_2",
+                    "heading_2": {
+                        "rich_text": [{"type": "text", "text": {"content": "Call to Action"}}]
+                    }
+                })
+                cta_points = self._extract_talking_points(cta_text)
+                for point in cta_points:
+                    children.append({
+                        "object": "block",
+                        "type": "bulleted_list_item",
+                        "bulleted_list_item": {
+                            "rich_text": [{"type": "text", "text": {"content": point}}]
+                        }
+                    })
+
+            # Create the subpage
+            response = self.notion_client.pages.create(
+                parent={"page_id": parent_page_id},
+                properties={
+                    "title": {
+                        "title": [
+                            {
+                                "text": {
+                                    "content": "Talking Points"
+                                }
+                            }
+                        ]
+                    }
+                },
+                children=children[:100]  # Notion limit
+            )
+
+            subpage_id = response['id']
+            self.logger.info(f"Created talking points subpage: {subpage_id}")
+
+            return subpage_id
+
+        except Exception as e:
+            self.logger.error(f"Error creating talking points subpage: {str(e)}")
+            return None
+
+    def _extract_talking_points(self, text: str, max_points: int = 5) -> List[str]:
+        """
+        Extract key talking points from script text.
+
+        Splits text into sentences and selects the most important ones
+        as bullet points for quick reference.
+
+        Args:
+            text: Script text to extract points from
+            max_points: Maximum number of points to extract
+
+        Returns:
+            List of talking point strings
+        """
+        if not text:
+            return []
+
+        # Split into sentences
+        sentences = []
+        for part in text.replace('? ', '?|').replace('! ', '!|').replace('. ', '.|').split('|'):
+            part = part.strip()
+            if part and len(part) > 10:  # Skip very short fragments
+                sentences.append(part)
+
+        if not sentences:
+            return [text[:200]] if text else []
+
+        # Select key sentences - prioritize first, last, and those with key phrases
+        points = []
+
+        # Always include first sentence (sets up the point)
+        if sentences:
+            points.append(sentences[0])
+
+        # Look for sentences with strong statements or key concepts
+        key_indicators = ['this is', 'here\'s', 'the key', 'important', 'remember',
+                         'you need', 'the problem', 'the solution', 'i learned',
+                         'the difference', 'this means', 'in other words']
+
+        for sentence in sentences[1:-1]:  # Skip first and last
+            lower = sentence.lower()
+            if any(indicator in lower for indicator in key_indicators):
+                if sentence not in points:
+                    points.append(sentence)
+                    if len(points) >= max_points - 1:
+                        break
+
+        # Fill remaining slots with evenly spaced sentences
+        if len(points) < max_points - 1 and len(sentences) > 2:
+            remaining = sentences[1:-1]
+            step = max(1, len(remaining) // (max_points - len(points) - 1))
+            for i in range(0, len(remaining), step):
+                if remaining[i] not in points:
+                    points.append(remaining[i])
+                    if len(points) >= max_points - 1:
+                        break
+
+        # Include last sentence if different (often a key takeaway)
+        if len(sentences) > 1 and sentences[-1] not in points:
+            points.append(sentences[-1])
+
+        # Truncate long points
+        return [p[:300] + '...' if len(p) > 300 else p for p in points[:max_points]]
+
     def execute(self,
                 content_type: str,
                 idea: Dict[str, Any],

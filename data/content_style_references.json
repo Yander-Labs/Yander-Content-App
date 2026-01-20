@@ -1,23 +1,34 @@
 {
-  "instructions": "Add successful content creator examples here. The research agent will analyze their patterns and structure.",
+  "instructions": "Add successful content creator examples here. The research agent will analyze their patterns and structure. Detailed style guides are stored in data/style_references/",
   "creators": [
     {
-      "name": "Example Creator",
-      "platform": "LinkedIn/YouTube/Twitter",
-      "profile_url": "https://...",
+      "name": "Lara Acosta",
+      "platform": "LinkedIn",
+      "profile_url": "https://www.linkedin.com/in/laraacostar/",
+      "detailed_reference": "data/style_references/lara_acosta.json",
       "content_style": {
-        "hook_pattern": "How they start their content (e.g., 'Question', 'Bold statement', 'Story')",
-        "structure": "How they organize content (e.g., 'Problem > Solution > CTA', 'Story > Lesson > Application')",
-        "length": "Typical content length",
-        "tone": "professional/casual/educational/provocative",
-        "engagement_tactics": ["What they do to drive engagement"],
-        "signature_elements": ["Unique elements they always include"]
+        "hook_pattern": "Bold statement under 8 words, multiple hooks throughout",
+        "structure": "SLAY Framework: Story > Lesson > Actionable > You (personal ending)",
+        "length": "Short-form, heavy line breaks, each sentence its own line",
+        "tone": "Conversational, confident, personal",
+        "engagement_tactics": [
+          "End with PS for personal touch",
+          "Use 'How I' instead of 'How to'",
+          "Quick wins in each line",
+          "No hashtags"
+        ],
+        "signature_elements": [
+          "Educational Storyteller method",
+          "Sentences under 8 words",
+          "Line breaks after every sentence",
+          "PS ending"
+        ]
       },
       "example_posts": [
         {
-          "title_or_hook": "Example hook or title",
-          "key_elements": "What makes this post effective",
-          "structure_notes": "How they organized this piece"
+          "title_or_hook": "I talk to every team member once a month.",
+          "key_elements": "Bold opener, line breaks, personal story, PS ending",
+          "structure_notes": "Hook > Why context > Lesson > PS with caveat"
         }
       ]
     }
@@ -26,18 +37,22 @@
     "common_hooks": [
       "Most successful creators use questions to start",
       "Bold contrarian statements get attention",
-      "Personal stories create connection"
+      "Personal stories create connection",
+      "Short punchy openers (under 8 words)"
     ],
     "content_structures": [
       "Problem > Agitation > Solution",
       "Hook > Story > Lesson > Application",
-      "Data point > Surprise > Explanation > Action"
+      "Data point > Surprise > Explanation > Action",
+      "SLAY: Story > Lesson > Actionable > You"
     ],
     "engagement_tactics": [
       "Ask questions in first comment",
       "Use line breaks for readability",
       "Include specific numbers/metrics",
-      "End with clear CTA"
+      "End with clear CTA",
+      "PS for personal touch",
+      "Multiple hooks throughout post"
     ]
   }
 }

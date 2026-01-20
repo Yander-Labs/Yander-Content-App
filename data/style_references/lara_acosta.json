@@ -1,0 +1,84 @@
+{
+  "name": "Lara Acosta",
+  "platform": "LinkedIn",
+  "profile_url": "https://www.linkedin.com/in/laraacostar/",
+  "description": "LinkedIn's fastest-growing female creator. Known for the Educational Storyteller method and SLAY framework.",
+  "sources": [
+    "https://magicpost.in/blog/how-to-write-like-lara-acosta",
+    "https://www.linkedin.com/posts/laraacostar_i-use-this-4-step-framework-to-write-viral-activity-7208793120665145344-3zuz",
+    "https://www.linkedin.com/posts/laraacostar_linkedin-writing-tip-i-use-to-create-viral-activity-7155174875018522624-HTSq",
+    "https://podcast.creatorscience.com/lara-acosta/"
+  ],
+  "frameworks": {
+    "SLAY": {
+      "description": "4-step framework for viral LinkedIn posts",
+      "steps": [
+        "S - Story: Start with a personal story",
+        "L - Lesson: Lead with a lesson",
+        "A - Actionable: Include actionable advice",
+        "Y - You: End with 'you' - make it personal"
+      ]
+    },
+    "Educational_Storyteller": {
+      "description": "Method for combining broad appeal with personal touch",
+      "components": [
+        "Platitude: Makes it broad and relatable",
+        "Story: Adds personality and uniqueness",
+        "Lesson: Keeps it niche and valuable"
+      ]
+    },
+    "Quick_Post_Framework": {
+      "steps": [
+        "Start with a personal story (How I)",
+        "Use a listicle to educate (Hyphens/line breaks)",
+        "End with a 'PS' to make it personable",
+        "Use platitudes (but with your own spin)"
+      ]
+    }
+  },
+  "writing_rules": {
+    "sentence_length": "Short and concise - no longer than 8 words per sentence ideally",
+    "opening": "Bold statement, no more than 8 words in first sentence",
+    "formatting": "Heavy use of line breaks for readability",
+    "hashtags": "No hashtags",
+    "tone": "Conversational, confident, accessible",
+    "framing": "Use 'How I' instead of 'How to' - personal experience over generic advice",
+    "hooks": "Multiple hooks throughout the post, not just the first line"
+  },
+  "key_principles": [
+    "Write each sentence like it's the last - be precise",
+    "Add a 'quick win' in each line - make it immediately applicable",
+    "Stop over-explaining - get to the point immediately",
+    "Give solutions - give people a reason to come back",
+    "Use bold statements - people like confidence",
+    "Be immediately actionable",
+    "Avoid complicated words - write conversationally",
+    "Share personal experiences and stories, not generic how-to advice"
+  ],
+  "structure_example": {
+    "hook": "Bold opening statement (under 8 words)",
+    "pattern": [
+      "Short punchy line.",
+      "Another short line.",
+      "Third point.",
+      "",
+      "Here's why:",
+      "",
+      "Expanded thought in short sentences.",
+      "Each line is its own paragraph.",
+      "Easy to scan and read.",
+      "",
+      "The lesson or insight.",
+      "",
+      "PS: Personal touch or additional tip"
+    ]
+  },
+  "what_to_avoid": [
+    "Long paragraphs",
+    "Generic 'How to' framing",
+    "Complicated vocabulary",
+    "Over-explaining concepts",
+    "Hashtags",
+    "Only one hook at the start"
+  ]
+}

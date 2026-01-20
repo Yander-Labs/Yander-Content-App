@@ -10,6 +10,8 @@ from .notion_agent import NotionAgent
 from .editor_notification_agent import EditorNotificationAgent
 from .video_editing_agent import VideoEditingAgent
 from .transcription_agent import TranscriptionAgent
+from .image_agent import ImageAgent
+from .video_content_workflow import VideoContentWorkflow, create_video_with_talking_points
 
 __all__ = [
     'BaseAgent',
@@ -20,4 +22,7 @@ __all__ = [
     'EditorNotificationAgent',
     'VideoEditingAgent',
     'TranscriptionAgent',
+    'ImageAgent',
+    'VideoContentWorkflow',
+    'create_video_with_talking_points',
 ]

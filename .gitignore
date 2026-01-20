@@ -62,6 +62,7 @@ data/*
 !data/content_guidelines.md
 !data/jordan_hayes_info.txt
 !data/yander_info.txt
+!data/style_references/
 
 # Temporary files
 *.tmp
@@ -79,3 +80,6 @@ videos_for_transcribing/
 
 # Transcripts output
 output/transcripts/
+
+# Generated images
+output/images/
