@@ -1,45 +1,30 @@
 # Write LinkedIn Post
 
-Write a LinkedIn post for Jordan Hayes using the approved style guidelines.
+Write a LinkedIn post for Jordan Hayes.
 
-## Topic/Angle
+## Topic
 $ARGUMENTS
 
-## Creator Context
+## Instructions
 
-**About Jordan Hayes:**
-- Owner of Hayes Media (marketing agency)
-- Scaled to over $1M in revenue
-- Building Yander (yander.io) - remote team management tool
-- Target audience: Agency owners
+1. Read `data/jordan_hayes_info.txt` for creator context
+2. Follow writing style rules from CLAUDE.md:
+   - Hook under 8 words
+   - Short paragraphs (1-3 sentences)
+   - Liberal line breaks
+   - 150-300 words
+   - NO emojis, NO hashtags
+   - Direct, confident tone from experience
 
-## Writing Style Rules
+3. Use one of these structures:
+   - Hook > Story > Lesson > Takeaway
+   - Problem > Insight > Action
+   - Bold claim > Evidence > Application
 
-1. **Hook**: Bold statement under 8 words that grabs attention
-2. **Structure**: Short paragraphs (1-3 sentences max)
-3. **Line breaks**: Use liberally - each thought gets its own line
-4. **Tone**: Direct, confident, speaks from experience not theory
-5. **Length**: 150-300 words
-6. **NO emojis**
-7. **NO hashtags**
-8. **End with**: Thought-provoking question OR clear takeaway
+4. End with a thought-provoking question OR clear takeaway
 
-## Content Patterns
+## Output
 
-- Lead with credibility when relevant (Hayes Media experience)
-- Use specific examples and numbers when possible
-- Focus on: growth strategies, operations, scaling, remote team management
-- Share practical, actionable insights
-- Avoid fluff - every point should provide real value
+Return plain text ready to copy-paste to LinkedIn.
 
-## Company Values (use as content themes)
-
-1. **We trust you to own it** - Ownership mindset, autonomy earned through reliability
-2. **Under-promise and over-deliver early** - Timing matters, early delivery builds trust
-3. **When they win, we win** - Be an extension of client's team, care about outcomes
-
-## Output Format
-
-Return the post as plain text, ready to copy-paste to LinkedIn.
-
-After writing, ask if I want to publish to Notion using `/publish-notion`.
+After writing, offer to publish with `/publish-notion`.
