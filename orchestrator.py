@@ -20,6 +20,7 @@ from agents.notion_agent import NotionAgent
 from agents.editor_notification_agent import EditorNotificationAgent
 from agents.transcription_agent import TranscriptionAgent
 from agents.video_editing_agent import VideoEditingAgent
+from agents.youtube_transcript_agent import YouTubeTranscriptAgent
 
 # Initialize colorama
 init(autoreset=True)
@@ -36,6 +37,7 @@ class ContentCreationOrchestrator:
         self.editor_agent = EditorNotificationAgent()
         self.transcription_agent = None  # Lazy-loaded due to model size
         self.video_editing_agent = None  # Lazy-loaded
+        self.youtube_transcript_agent = None  # Lazy-loaded
 
         print(f"{Fore.GREEN}✓ Content Creation Orchestrator initialized{Style.RESET_ALL}")
         print(f"{Fore.CYAN}All agents loaded and ready{Style.RESET_ALL}\n")
@@ -387,6 +389,52 @@ class ContentCreationOrchestrator:
         result["transcript"] = transcript_result
 
         result["status"] = "complete"
+        result["created_at"] = datetime.now().isoformat()
+
+        return result
+
+    def analyze_youtube_video(
+        self,
+        url: str,
+        prompt: str = "Summarize the key points and main takeaways from this video.",
+        save_transcript: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Fetch and analyze a YouTube video transcript.
+
+        Args:
+            url: YouTube video URL
+            prompt: Analysis prompt/question
+            save_transcript: Whether to save transcript to file
+
+        Returns:
+            Dictionary with transcript and analysis
+        """
+        print(f"\n{Fore.YELLOW}{'='*60}")
+        print(f"{Fore.YELLOW}ANALYZING YOUTUBE VIDEO")
+        print(f"{Fore.YELLOW}{'='*60}{Style.RESET_ALL}\n")
+
+        # Lazy-load YouTube transcript agent
+        if self.youtube_transcript_agent is None:
+            self.youtube_transcript_agent = YouTubeTranscriptAgent()
+
+        print(f"{Fore.CYAN}[1/2] Fetching transcript...{Style.RESET_ALL}")
+        result = self.youtube_transcript_agent.execute(
+            youtube_url=url,
+            prompt=prompt,
+            save_transcript=save_transcript,
+        )
+
+        if result.get("status") == "error":
+            print(f"{Fore.RED}✗ Failed to fetch transcript: {result.get('error')}{Style.RESET_ALL}")
+            return result
+
+        print(f"{Fore.GREEN}✓ Transcript fetched ({result['word_count']} words){Style.RESET_ALL}")
+
+        if result.get("analysis"):
+            print(f"{Fore.CYAN}[2/2] Analysis complete{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}✓ Insights generated{Style.RESET_ALL}\n")
+
         result["created_at"] = datetime.now().isoformat()
 
         return result

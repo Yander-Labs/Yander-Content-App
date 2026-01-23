@@ -223,6 +223,46 @@ def edit_video_command(args):
         sys.exit(1)
 
 
+def youtube_insights_command(args):
+    """Handle YouTube insights command."""
+    from agents import YouTubeTranscriptAgent
+
+    print(f"{Fore.CYAN}Fetching YouTube transcript...{Style.RESET_ALL}")
+
+    agent = YouTubeTranscriptAgent()
+
+    try:
+        result = agent.execute(
+            youtube_url=args.url,
+            prompt=args.prompt,
+            save_transcript=not args.no_save,
+        )
+
+        if result.get("status") == "error":
+            print(f"{Fore.RED}Error: {result.get('error')}{Style.RESET_ALL}")
+            sys.exit(1)
+
+        print(f"\n{Fore.GREEN}Transcript fetched successfully!{Style.RESET_ALL}")
+        print(f"  Video ID:    {result['video_id']}")
+        print(f"  Duration:    {result['duration_seconds']:.0f}s")
+        print(f"  Words:       {result['word_count']}")
+        print(f"  Language:    {result['language']}")
+        print(f"  Auto-gen:    {result['is_auto_generated']}")
+
+        if result.get('transcript_file'):
+            print(f"\n{Fore.GREEN}Transcript saved to: {result['transcript_file']}{Style.RESET_ALL}")
+
+        if result.get('analysis'):
+            print(f"\n{Fore.CYAN}{'='*60}")
+            print(f"ANALYSIS")
+            print(f"{'='*60}{Style.RESET_ALL}\n")
+            print(result['analysis'])
+
+    except Exception as e:
+        print(f"{Fore.RED}Error: {str(e)}{Style.RESET_ALL}")
+        sys.exit(1)
+
+
 def transcribe_command(args):
     """Handle transcription command."""
     from agents import TranscriptionAgent
@@ -341,6 +381,15 @@ Examples:
     transcribe_parser.add_argument('--cleanup', action='store_true',
                                    help='Use Claude to clean up transcript')
     transcribe_parser.set_defaults(func=transcribe_command)
+
+    # YouTube insights command
+    youtube_parser = subparsers.add_parser('youtube-insights', help='Fetch YouTube transcript and get AI insights')
+    youtube_parser.add_argument('--url', '-u', required=True, help='YouTube video URL')
+    youtube_parser.add_argument('--prompt', '-p', default='Summarize the key points and main takeaways from this video.',
+                                help='Analysis prompt (what insights do you want?)')
+    youtube_parser.add_argument('--no-save', action='store_true',
+                                help='Do not save transcript to file')
+    youtube_parser.set_defaults(func=youtube_insights_command)
 
     args = parser.parse_args()
 

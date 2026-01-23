@@ -40,3 +40,6 @@ faster-whisper>=1.0.0
 
 # AI Image Generation
 replicate>=0.25.0
+
+# YouTube transcript extraction
+youtube-transcript-api>=0.6.0

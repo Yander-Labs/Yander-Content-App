@@ -12,6 +12,7 @@ from .video_editing_agent import VideoEditingAgent
 from .transcription_agent import TranscriptionAgent
 from .image_agent import ImageAgent
 from .video_content_workflow import VideoContentWorkflow, create_video_with_talking_points
+from .youtube_transcript_agent import YouTubeTranscriptAgent
 
 __all__ = [
     'BaseAgent',
@@ -25,4 +26,5 @@ __all__ = [
     'ImageAgent',
     'VideoContentWorkflow',
     'create_video_with_talking_points',
+    'YouTubeTranscriptAgent',
 ]
