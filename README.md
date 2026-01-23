@@ -35,6 +35,13 @@ An AI-powered multi-agent system for automating content creation workflows for m
 - Includes raw video file references and editing notes
 - Streamlines the post-recording workflow
 
+### 🔄 **Task 6: Autonomous Daily Content Generation**
+- Runs daily via cron to generate and publish content automatically
+- Rotates through 8 themes (team management, client relationships, operations, leadership, company values)
+- Avoids duplicate content by checking recent Notion posts
+- Generates 2-3 posts per day with zero manual intervention
+- Publishes directly to Notion with "Ideation" status
+
 ## System Architecture
 
 ```
@@ -60,6 +67,24 @@ An AI-powered multi-agent system for automating content creation workflows for m
          ┌────────▼─────────┐
          │ Editor Notifier  │
          └──────────────────┘
+
+
+┌─────────────────────────────────────────────────────┐
+│        Daily Content Agent (Autonomous)             │
+│                                                      │
+│  Runs via cron, generates content automatically     │
+└──────────────────┬──────────────────────────────────┘
+                   │
+    ┌──────────────┼──────────────┐
+    │              │              │
+┌───▼───┐    ┌────▼────┐   ┌────▼────┐
+│ Theme │    │  Idea   │   │  Post   │
+│Select │───▶│Generate │──▶│ Writer  │
+└───────┘    └─────────┘   └────┬────┘
+                                │
+                       ┌────────▼─────────┐
+                       │  Notion Agent    │
+                       └──────────────────┘
 ```
 
 ## Installation
@@ -202,6 +227,59 @@ python3 main.py notify-editor \
   --files "recording1.mp4,recording2.mp4" \
   --notes "Great energy in take 2!"
 ```
+
+### Daily Content Generation (Automated)
+
+Run the daily content generator manually:
+
+```bash
+python3 scripts/run_daily_content.py
+```
+
+Or specify the number of posts:
+
+```bash
+python3 scripts/run_daily_content.py --count 2
+```
+
+#### Setting Up Cron for Daily Automation
+
+To run automatically every day at 6am:
+
+```bash
+# Open crontab editor
+crontab -e
+
+# Add this line (adjust path as needed)
+0 6 * * * cd /Users/jordanhayes/content-creation-agents && /usr/bin/python3 scripts/run_daily_content.py >> output/logs/cron.log 2>&1
+```
+
+#### Theme Configuration
+
+Edit `data/daily_content_themes.json` to customize themes:
+
+```json
+{
+  "themes": [
+    {
+      "name": "team_management",
+      "display_name": "Team Management & Workload",
+      "keywords": ["team", "hiring", "burnout"],
+      "prompts": ["How to spot burnout before it's too late"]
+    }
+  ],
+  "last_used_index": 0,
+  "rotation_strategy": "sequential"
+}
+```
+
+The system rotates through themes sequentially, tracking progress in `last_used_index`.
+
+#### Daily Content Output
+
+Results are saved to:
+- **Logs**: `output/logs/daily_content_YYYYMMDD.log`
+- **Results**: `output/posts/daily_YYYYMMDD/results.json`
 
 ### Using Data Files
 
