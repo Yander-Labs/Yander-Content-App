@@ -223,6 +223,39 @@ def edit_video_command(args):
         sys.exit(1)
 
 
+def enhance_image_command(args):
+    """Handle image enhancement command."""
+    from agents import ImageEnhancementAgent
+
+    print(f"{Fore.CYAN}Enhancing image...{Style.RESET_ALL}")
+
+    agent = ImageEnhancementAgent()
+
+    try:
+        result = agent.execute(
+            image_path=args.input,
+            brightness=args.brightness,
+            contrast=args.contrast,
+            sharpness=args.sharpness,
+            color=args.color,
+            auto=args.auto,
+        )
+
+        if result.get("status") == "error":
+            print(f"{Fore.RED}Error: {result.get('error')}{Style.RESET_ALL}")
+            sys.exit(1)
+
+        print(f"\n{Fore.GREEN}Image enhanced successfully!{Style.RESET_ALL}")
+        print(f"  Output: {result['output_path']}")
+
+        if result.get('enhancements_applied'):
+            print(f"  Applied: {', '.join(result['enhancements_applied'])}")
+
+    except Exception as e:
+        print(f"{Fore.RED}Error: {str(e)}{Style.RESET_ALL}")
+        sys.exit(1)
+
+
 def youtube_insights_command(args):
     """Handle YouTube insights command."""
     from agents import YouTubeTranscriptAgent
@@ -390,6 +423,21 @@ Examples:
     youtube_parser.add_argument('--no-save', action='store_true',
                                 help='Do not save transcript to file')
     youtube_parser.set_defaults(func=youtube_insights_command)
+
+    # Enhance image command
+    enhance_parser = subparsers.add_parser('enhance-image', help='Enhance image brightness, contrast, sharpness')
+    enhance_parser.add_argument('--input', '-i', required=True, help='Path to image file')
+    enhance_parser.add_argument('--brightness', '-b', type=float, default=1.0,
+                                help='Brightness factor (>1 = brighter, default: 1.0)')
+    enhance_parser.add_argument('--contrast', '-c', type=float, default=1.0,
+                                help='Contrast factor (>1 = more contrast, default: 1.0)')
+    enhance_parser.add_argument('--sharpness', '-s', type=float, default=1.0,
+                                help='Sharpness factor (>1 = sharper, default: 1.0)')
+    enhance_parser.add_argument('--color', type=float, default=1.0,
+                                help='Color saturation factor (>1 = more saturated, default: 1.0)')
+    enhance_parser.add_argument('--auto', '-a', action='store_true',
+                                help='Auto-enhance with balanced defaults')
+    enhance_parser.set_defaults(func=enhance_image_command)
 
     args = parser.parse_args()
 

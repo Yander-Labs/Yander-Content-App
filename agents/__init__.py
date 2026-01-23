@@ -13,6 +13,8 @@ from .transcription_agent import TranscriptionAgent
 from .image_agent import ImageAgent
 from .video_content_workflow import VideoContentWorkflow, create_video_with_talking_points
 from .youtube_transcript_agent import YouTubeTranscriptAgent
+from .image_enhancement_agent import ImageEnhancementAgent
+from .daily_content_agent import DailyContentAgent
 
 __all__ = [
     'BaseAgent',
@@ -27,4 +29,6 @@ __all__ = [
     'VideoContentWorkflow',
     'create_video_with_talking_points',
     'YouTubeTranscriptAgent',
+    'ImageEnhancementAgent',
+    'DailyContentAgent',
 ]

@@ -28,3 +28,22 @@ CONTENT GUIDELINES:
 - Lead with credibility when relevant (Hayes Media, $1M in 2025)
 - Focus on growth strategies, operations, scaling, and remote team management
 - Target agency owners specifically
+
+COMPANY VALUES:
+1. We trust you to own it
+   - Ownership mindset is the baseline expectation
+   - Don't wait for permission to do great work
+   - See a problem? Fix it. See an opportunity? Take it.
+   - Autonomy is earned through reliability
+
+2. Under-promise and over-deliver early
+   - Timing matters as much as quality
+   - Early delivery creates breathing room and signals competence
+   - Pad timelines internally, not externally
+   - Build in QA time before delivery, not after
+
+3. When they win, we win
+   - Be an extension of your client's team, not just a vendor
+   - Client success is our success - not a talking point, a business model
+   - Care about outcomes, not just outputs
+   - Go beyond scope when it matters

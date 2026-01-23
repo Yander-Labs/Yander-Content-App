@@ -775,6 +775,93 @@ class NotionAgent(BaseAgent):
         # Truncate long points
         return [p[:300] + '...' if len(p) > 300 else p for p in points[:max_points]]
 
+    def get_recent_pages(self, days: int = 30) -> List[Dict[str, Any]]:
+        """
+        Get recently created pages from the database.
+
+        Args:
+            days: Number of days to look back
+
+        Returns:
+            List of page info dicts with title, created_date, page_id
+        """
+        if not self.notion_client or not self.database_id:
+            self.logger.error("Notion client not initialized")
+            return []
+
+        try:
+            from datetime import datetime, timedelta
+
+            # Calculate date threshold
+            threshold = datetime.now() - timedelta(days=days)
+
+            self.logger.info(f"Fetching pages from last {days} days")
+
+            # Use search to find pages in the database
+            response = self.notion_client.search(
+                filter={
+                    "property": "object",
+                    "value": "page"
+                },
+                sort={
+                    "direction": "descending",
+                    "timestamp": "last_edited_time"
+                },
+                page_size=100
+            )
+
+            pages = []
+            for page in response.get("results", []):
+                # Filter to only pages from our database
+                parent = page.get("parent", {})
+                if parent.get("type") != "database_id":
+                    continue
+                if parent.get("database_id", "").replace("-", "") != self.database_id.replace("-", ""):
+                    continue
+
+                # Check date
+                created_time = page.get("created_time", "")
+                if created_time:
+                    try:
+                        page_date = datetime.fromisoformat(created_time.replace("Z", "+00:00"))
+                        if page_date.replace(tzinfo=None) < threshold:
+                            continue
+                    except:
+                        pass
+
+                title = "Untitled"
+                if page.get("properties", {}).get("Name", {}).get("title"):
+                    title_list = page["properties"]["Name"]["title"]
+                    if title_list:
+                        title = title_list[0].get("text", {}).get("content", "Untitled")
+
+                pages.append({
+                    "page_id": page["id"],
+                    "title": title,
+                    "created_date": created_time,
+                    "url": page.get("url", "")
+                })
+
+            self.logger.info(f"Found {len(pages)} pages from last {days} days")
+            return pages
+
+        except Exception as e:
+            self.logger.error(f"Error fetching recent pages: {str(e)}")
+            return []
+
+    def get_page_titles(self, days: int = 30) -> List[str]:
+        """
+        Get just the titles of recent pages (for duplicate checking).
+
+        Args:
+            days: Number of days to look back
+
+        Returns:
+            List of page titles
+        """
+        pages = self.get_recent_pages(days)
+        return [p["title"] for p in pages]
+
     def execute(self,
                 content_type: str,
                 idea: Dict[str, Any],
