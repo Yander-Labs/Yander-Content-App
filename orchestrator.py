@@ -21,6 +21,7 @@ from agents.editor_notification_agent import EditorNotificationAgent
 from agents.transcription_agent import TranscriptionAgent
 from agents.video_editing_agent import VideoEditingAgent
 from agents.youtube_transcript_agent import YouTubeTranscriptAgent
+from agents.image_agent import ImageAgent
 
 # Initialize colorama
 init(autoreset=True)
@@ -38,6 +39,7 @@ class ContentCreationOrchestrator:
         self.transcription_agent = None  # Lazy-loaded due to model size
         self.video_editing_agent = None  # Lazy-loaded
         self.youtube_transcript_agent = None  # Lazy-loaded
+        self.image_agent = None  # Lazy-loaded
 
         print(f"{Fore.GREEN}✓ Content Creation Orchestrator initialized{Style.RESET_ALL}")
         print(f"{Fore.CYAN}All agents loaded and ready{Style.RESET_ALL}\n")
@@ -47,9 +49,10 @@ class ContentCreationOrchestrator:
                             user_data: Optional[str] = None,
                             topics: Optional[List[str]] = None,
                             video_index: int = 0,
-                            tone: str = "professional") -> Dict[str, Any]:
+                            tone: str = "professional",
+                            generate_images: bool = True) -> Dict[str, Any]:
         """
-        Create complete video content (idea, script, mindmap, Notion entry).
+        Create complete video content (idea, script, images, Notion entry with talking points).
 
         Args:
             tool_info: Information about the marketing tool
@@ -57,10 +60,12 @@ class ContentCreationOrchestrator:
             topics: Topics to focus on
             video_index: Index of video idea to use
             tone: Tone for the script
+            generate_images: Whether to generate sketch images for each section
 
         Returns:
             Dictionary with all created content
         """
+        total_steps = 6 if generate_images else 5
         print(f"\n{Fore.YELLOW}{'='*60}")
         print(f"{Fore.YELLOW}CREATING VIDEO CONTENT")
         print(f"{Fore.YELLOW}{'='*60}{Style.RESET_ALL}\n")
@@ -68,7 +73,7 @@ class ContentCreationOrchestrator:
         result = {}
 
         # Step 1: Research content ideas
-        print(f"{Fore.CYAN}[1/5] Researching content ideas...{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}[1/{total_steps}] Researching content ideas...{Style.RESET_ALL}")
         research_results = self.research_agent.execute(
             tool_info=tool_info,
             user_data=user_data,
@@ -91,7 +96,7 @@ class ContentCreationOrchestrator:
         result['idea'] = selected_idea
 
         # Step 2: Write script
-        print(f"{Fore.CYAN}[2/5] Writing video script...{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}[2/{total_steps}] Writing video script...{Style.RESET_ALL}")
         script_result = self.scriptwriting_agent.execute(
             content_type="video",
             idea=selected_idea,
@@ -105,8 +110,38 @@ class ContentCreationOrchestrator:
         print(f"{Fore.GREEN}✓ Script complete ({script_result.get('estimated_length_minutes', 0)} minutes){Style.RESET_ALL}\n")
         result['script'] = script_result
 
-        # Step 3: Generate mindmap
-        print(f"{Fore.CYAN}[3/5] Generating mindmap...{Style.RESET_ALL}")
+        # Step 3: Generate images for each section (if enabled)
+        images = []
+        if generate_images:
+            print(f"{Fore.CYAN}[3/{total_steps}] Generating section images...{Style.RESET_ALL}")
+
+            # Lazy-load image agent
+            if self.image_agent is None:
+                self.image_agent = ImageAgent()
+
+            if self.image_agent.client:
+                num_sections = len(script_result.get('main_sections', []))
+                print(f"{Fore.CYAN}    Generating {num_sections} images (this may take a few minutes)...{Style.RESET_ALL}")
+
+                image_result = self.image_agent.generate_section_images(
+                    script_result,
+                    include_hook=False,
+                    include_intro=False,
+                    rate_limit_delay=12.0
+                )
+
+                if image_result:
+                    images = image_result
+                    print(f"{Fore.GREEN}✓ Generated {len(images)} section images{Style.RESET_ALL}\n")
+                    result['images'] = images
+                else:
+                    print(f"{Fore.YELLOW}⚠ No images generated{Style.RESET_ALL}\n")
+            else:
+                print(f"{Fore.YELLOW}⚠ Image generation skipped (no REPLICATE_API_TOKEN){Style.RESET_ALL}\n")
+
+        # Step 4: Generate mindmap (adjusted step number)
+        step_num = 4 if generate_images else 3
+        print(f"{Fore.CYAN}[{step_num}/{total_steps}] Generating mindmap...{Style.RESET_ALL}")
         mindmap_result = self.mindmap_agent.execute(
             content=script_result,
             content_type="video"
@@ -119,8 +154,9 @@ class ContentCreationOrchestrator:
             print(f"{Fore.GREEN}✓ Mindmap saved: {mindmap_result['svg_file']}{Style.RESET_ALL}\n")
             result['mindmap'] = mindmap_result
 
-        # Step 4: Create Notion entry
-        print(f"{Fore.CYAN}[4/5] Creating Notion database entry...{Style.RESET_ALL}")
+        # Step 5: Create Notion entry
+        step_num = 5 if generate_images else 4
+        print(f"{Fore.CYAN}[{step_num}/{total_steps}] Creating Notion database entry...{Style.RESET_ALL}")
         notion_result = self.notion_agent.execute(
             content_type="video",
             idea=selected_idea,
@@ -135,8 +171,21 @@ class ContentCreationOrchestrator:
             print(f"{Fore.GREEN}✓ Notion page created: {notion_result['page_url']}{Style.RESET_ALL}\n")
             result['notion'] = notion_result
 
-        # Step 5: Summary
-        print(f"{Fore.CYAN}[5/5] Video content package complete!{Style.RESET_ALL}\n")
+            # Create talking points subpage with images
+            if notion_result.get('page_id') and (images or script_result):
+                print(f"{Fore.CYAN}    Creating talking points page with images...{Style.RESET_ALL}")
+                subpage_id = self.notion_agent.create_talking_points_subpage(
+                    parent_page_id=notion_result['page_id'],
+                    script=script_result,
+                    images=images
+                )
+                if subpage_id:
+                    print(f"{Fore.GREEN}    ✓ Talking points page created{Style.RESET_ALL}\n")
+                    result['talking_points_page_id'] = subpage_id
+
+        # Final step: Summary
+        step_num = 6 if generate_images else 5
+        print(f"{Fore.CYAN}[{step_num}/{total_steps}] Video content package complete!{Style.RESET_ALL}\n")
 
         result['status'] = 'complete'
         result['created_at'] = datetime.now().isoformat()
