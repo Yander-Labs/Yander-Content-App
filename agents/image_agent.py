@@ -10,6 +10,7 @@ import requests
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from .base_agent import BaseAgent
+from .image_uploader import ImageUploader
 
 
 class ImageAgent(BaseAgent):
@@ -47,11 +48,15 @@ class ImageAgent(BaseAgent):
         self.output_dir = "output/images"
         os.makedirs(self.output_dir, exist_ok=True)
 
+        # Image uploader for permanent hosting
+        self.uploader = ImageUploader()
+
     def generate_image(self,
                        concept: str,
                        style: Optional[str] = None,
                        aspect_ratio: str = "16:9",
-                       save_locally: bool = True) -> Optional[Dict[str, Any]]:
+                       save_locally: bool = True,
+                       upload_to_imgur: bool = True) -> Optional[Dict[str, Any]]:
         """
         Generate an image for a given concept.
 
@@ -60,9 +65,11 @@ class ImageAgent(BaseAgent):
             style: Style prompt override. Uses DEFAULT_STYLE if not provided.
             aspect_ratio: Image aspect ratio ("1:1", "16:9", "9:16", "4:3")
             save_locally: Whether to download and save the image locally
+            upload_to_imgur: Whether to upload to Imgur for permanent hosting (default True)
 
         Returns:
-            Dictionary with image URL and local path if successful
+            Dictionary with image URL and local path if successful.
+            If upload_to_imgur is True, 'url' will be the permanent Imgur URL.
         """
         if not self.client:
             self.logger.error("Replicate client not initialized")
@@ -110,6 +117,7 @@ class ImageAgent(BaseAgent):
 
             result = {
                 "url": image_url,
+                "replicate_url": image_url,  # Keep original Replicate URL
                 "concept": concept,
                 "prompt": full_prompt,
             }
@@ -119,6 +127,17 @@ class ImageAgent(BaseAgent):
                 local_path = self._download_image(image_url, concept)
                 if local_path:
                     result["local_path"] = local_path
+
+                    # Upload to Imgur for permanent hosting
+                    if upload_to_imgur:
+                        self.logger.info(f"Uploading to Imgur for permanent hosting...")
+                        upload_result = self.uploader.upload_file(local_path, concept[:40])
+                        if upload_result:
+                            result["url"] = upload_result["url"]  # Use Imgur URL as primary
+                            result["imgur_url"] = upload_result["url"]
+                            self.logger.info(f"Permanent URL: {upload_result['url']}")
+                        else:
+                            self.logger.warning("Imgur upload failed, using temporary Replicate URL")
 
             return result
 

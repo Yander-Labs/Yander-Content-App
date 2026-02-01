@@ -7,10 +7,13 @@ AI-powered content generation system for Hayes Media. Generates LinkedIn posts, 
 ## Key Files
 
 - `agents/` - All agent implementations
+- `agents/image_agent.py` - AI image generation with Imgur upload
+- `agents/image_uploader.py` - Permanent image hosting via Imgur
 - `data/jordan_hayes_info.txt` - Creator context (update quarterly)
 - `data/daily_content_themes.json` - Theme rotation config
 - `data/content_style_references.json` - Writing style patterns
 - `scripts/run_daily_content.py` - Daily automation script
+- `output/images/` - Local copies of generated images
 
 ## Writing Style Rules
 
@@ -69,6 +72,13 @@ When generating content for Jordan Hayes:
 /publish-notion <content>
 ```
 
+### Generate images
+```
+/generate-images <concept description>
+/generate-images --script output/scripts/video.json
+```
+Images are auto-uploaded to Imgur for permanent hosting.
+
 ### Run daily generation
 ```
 /daily-content <count>
@@ -83,6 +93,12 @@ python3 -c "from agents import DailyContentAgent; a = DailyContentAgent(); print
 
 # Test Notion connection
 python3 -c "from agents import NotionAgent; a = NotionAgent(); print(a.get_page_titles(7))"
+
+# Test image generation (generates + uploads to Imgur)
+python3 -c "from agents import ImageAgent; a = ImageAgent(); print(a.generate_image('test concept'))"
+
+# Test Imgur upload only
+python3 -c "from agents import ImageUploader; u = ImageUploader(); print(u.upload_file('output/images/test.png'))"
 ```
 
 ## Context Maintenance

@@ -63,7 +63,8 @@ class NotionAgent(BaseAgent):
     def create_video_entry(self,
                           idea: Dict[str, Any],
                           script: Dict[str, Any],
-                          mindmap_path: Optional[str] = None) -> Optional[str]:
+                          mindmap_path: Optional[str] = None,
+                          images: Optional[List[Dict[str, Any]]] = None) -> Optional[str]:
         """
         Create a new video entry in Notion database.
 
@@ -71,6 +72,7 @@ class NotionAgent(BaseAgent):
             idea: Content idea from research agent
             script: Video script from scriptwriting agent
             mindmap_path: Path to mindmap SVG file
+            images: Optional list of image dicts with 'section' and 'url' keys
 
         Returns:
             Notion page ID if successful
@@ -118,96 +120,174 @@ class NotionAgent(BaseAgent):
             # Build content blocks with toggle structure
             children = []
 
-            # Build script content for toggle
+            # Build image lookup by section name
+            image_lookup = {}
+            if images:
+                for img in images:
+                    section_name = img.get('section', '').lower()
+                    image_lookup[section_name] = img.get('url')
+
+            # Build script content for toggle (with images and talking points format)
             toggle_children = []
 
-            # Add hook
+            # Add intro callout
             toggle_children.append({
                 "object": "block",
-                "type": "heading_3",
-                "heading_3": {
-                    "rich_text": [{"type": "text", "text": {"content": "Hook"}}]
-                }
-            })
-            toggle_children.append({
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": {
-                    "rich_text": [{"type": "text", "text": {"content": script.get('hook', {}).get('script', '')[:2000]}}]
+                "type": "callout",
+                "callout": {
+                    "rich_text": [{"type": "text", "text": {"content": "Quick reference for recording. Each section has key points to hit."}}],
+                    "icon": {"emoji": "🎬"}
                 }
             })
 
-            # Add early CTA (like/subscribe request in first 30 seconds)
-            if script.get('early_cta'):
+            # Add divider
+            toggle_children.append({
+                "object": "block",
+                "type": "divider",
+                "divider": {}
+            })
+
+            # Add hook with image
+            if 'hook' in image_lookup:
                 toggle_children.append({
                     "object": "block",
-                    "type": "heading_3",
-                    "heading_3": {
-                        "rich_text": [{"type": "text", "text": {"content": "Early CTA"}}]
+                    "type": "image",
+                    "image": {
+                        "type": "external",
+                        "external": {"url": image_lookup['hook']}
                     }
                 })
-                toggle_children.append({
-                    "object": "block",
-                    "type": "paragraph",
-                    "paragraph": {
-                        "rich_text": [{"type": "text", "text": {"content": script.get('early_cta', {}).get('script', '')[:2000]}}]
-                    }
-                })
-
-            # Add intro
             toggle_children.append({
                 "object": "block",
-                "type": "heading_3",
-                "heading_3": {
-                    "rich_text": [{"type": "text", "text": {"content": "Intro"}}]
+                "type": "heading_2",
+                "heading_2": {
+                    "rich_text": [{"type": "text", "text": {"content": "Hook: " + script.get('hook', {}).get('script', '')[:50] + "..."}}]
                 }
             })
-            toggle_children.append({
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": {
-                    "rich_text": [{"type": "text", "text": {"content": script.get('intro', {}).get('script', '')[:2000]}}]
-                }
-            })
-
-            # Add main sections
-            for section in script.get('main_sections', [])[:8]:  # Limit sections to avoid too many blocks
+            hook_points = self._extract_talking_points(script.get('hook', {}).get('script', ''))
+            for point in hook_points:
                 toggle_children.append({
                     "object": "block",
-                    "type": "heading_3",
-                    "heading_3": {
-                        "rich_text": [{"type": "text", "text": {"content": section.get('section_title', 'Section')[:100]}}]
+                    "type": "bulleted_list_item",
+                    "bulleted_list_item": {
+                        "rich_text": [{"type": "text", "text": {"content": point}}]
                     }
                 })
 
-                # Split long script content into multiple paragraphs to avoid truncation
-                script_text = section.get('script', '')
-                # Split into chunks of ~1800 chars at sentence boundaries
-                chunks = self._split_text_into_chunks(script_text, max_length=1800)
-                for chunk in chunks[:3]:  # Limit to 3 paragraphs per section
+            # Add divider
+            toggle_children.append({
+                "object": "block",
+                "type": "divider",
+                "divider": {}
+            })
+
+            # Add intro with image
+            if 'intro' in image_lookup:
+                toggle_children.append({
+                    "object": "block",
+                    "type": "image",
+                    "image": {
+                        "type": "external",
+                        "external": {"url": image_lookup['intro']}
+                    }
+                })
+            intro_text = script.get('intro', {}).get('script', '')
+            if intro_text:
+                toggle_children.append({
+                    "object": "block",
+                    "type": "heading_2",
+                    "heading_2": {
+                        "rich_text": [{"type": "text", "text": {"content": "Intro"}}]
+                    }
+                })
+                intro_points = self._extract_talking_points(intro_text)
+                for point in intro_points:
                     toggle_children.append({
                         "object": "block",
-                        "type": "paragraph",
-                        "paragraph": {
-                            "rich_text": [{"type": "text", "text": {"content": chunk}}]
+                        "type": "bulleted_list_item",
+                        "bulleted_list_item": {
+                            "rich_text": [{"type": "text", "text": {"content": point}}]
                         }
                     })
 
-            # Add CTA
-            toggle_children.append({
-                "object": "block",
-                "type": "heading_3",
-                "heading_3": {
-                    "rich_text": [{"type": "text", "text": {"content": "Call to Action"}}]
-                }
-            })
-            toggle_children.append({
-                "object": "block",
-                "type": "paragraph",
-                "paragraph": {
-                    "rich_text": [{"type": "text", "text": {"content": script.get('call_to_action', {}).get('script', '')[:2000]}}]
-                }
-            })
+            # Add main sections with images
+            for section in script.get('main_sections', [])[:10]:
+                section_title = section.get('section_title', 'Section')
+                section_text = section.get('script', '')
+
+                # Add divider
+                toggle_children.append({
+                    "object": "block",
+                    "type": "divider",
+                    "divider": {}
+                })
+
+                # Add image if available for this section
+                section_key = section_title.lower()
+                if section_key in image_lookup:
+                    toggle_children.append({
+                        "object": "block",
+                        "type": "image",
+                        "image": {
+                            "type": "external",
+                            "external": {"url": image_lookup[section_key]}
+                        }
+                    })
+
+                toggle_children.append({
+                    "object": "block",
+                    "type": "heading_2",
+                    "heading_2": {
+                        "rich_text": [{"type": "text", "text": {"content": section_title[:100]}}]
+                    }
+                })
+
+                # Extract talking points from section
+                talking_points = self._extract_talking_points(section_text)
+                for point in talking_points:
+                    toggle_children.append({
+                        "object": "block",
+                        "type": "bulleted_list_item",
+                        "bulleted_list_item": {
+                            "rich_text": [{"type": "text", "text": {"content": point}}]
+                        }
+                    })
+
+            # Add CTA with image
+            cta_text = script.get('call_to_action', {}).get('script', '')
+            if cta_text:
+                toggle_children.append({
+                    "object": "block",
+                    "type": "divider",
+                    "divider": {}
+                })
+
+                if 'call to action' in image_lookup:
+                    toggle_children.append({
+                        "object": "block",
+                        "type": "image",
+                        "image": {
+                            "type": "external",
+                            "external": {"url": image_lookup['call to action']}
+                        }
+                    })
+
+                toggle_children.append({
+                    "object": "block",
+                    "type": "heading_2",
+                    "heading_2": {
+                        "rich_text": [{"type": "text", "text": {"content": "Call to Action"}}]
+                    }
+                })
+                cta_points = self._extract_talking_points(cta_text)
+                for point in cta_points:
+                    toggle_children.append({
+                        "object": "block",
+                        "type": "bulleted_list_item",
+                        "bulleted_list_item": {
+                            "rich_text": [{"type": "text", "text": {"content": point}}]
+                        }
+                    })
 
             # Create H1 toggle heading named "Content" to match template
             children.append({
